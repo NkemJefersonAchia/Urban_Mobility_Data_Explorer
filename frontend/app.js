@@ -1,7 +1,3 @@
-/**
- * Urban Mobility Data Explorer - Frontend Application
- * Handles API interactions, data visualization, and user interactions
- */
 
 // Configuration
 const API_BASE_URL = 'http://localhost:5000/api';
