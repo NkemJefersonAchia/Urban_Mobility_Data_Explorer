@@ -3,274 +3,206 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NYC Mobility Explorer | Urban Transportation Analytics</title>
-    <link rel="stylesheet" href="css/main.css">
+    <title>Urban Mobility Data Explorer</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
-    <!-- Header -->
-    <header class="main-header">
-        <div class="container">
-            <div class="header-content">
-                <div class="logo-section">
-                    <h1 class="site-title">NYC Mobility Explorer</h1>
-                    <p class="site-subtitle">Urban Transportation Analytics</p>
-                </div>
-                <nav class="header-nav">
-                    <button class="nav-btn active" data-view="overview">Overview</button>
-                    <button class="nav-btn" data-view="temporal">Temporal</button>
-                    <button class="nav-btn" data-view="spatial">Spatial</button>
-                    <button class="nav-btn" data-view="economic">Economic</button>
-                </nav>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>Urban Mobility Data Explorer</h1>
+            <p class="subtitle">NYC Taxi Trip Analysis Dashboard</p>
+        </header>
+
+        <!-- Statistics Overview -->
+        <section class="statistics-grid" id="statistics">
+            <div class="stat-card">
+                <h3>Total Trips</h3>
+                <p class="stat-value" id="total-trips">Loading...</p>
             </div>
-        </div>
-    </header>
+            <div class="stat-card">
+                <h3>Average Distance</h3>
+                <p class="stat-value" id="avg-distance">Loading...</p>
+            </div>
+            <div class="stat-card">
+                <h3>Average Duration</h3>
+                <p class="stat-value" id="avg-duration">Loading...</p>
+            </div>
+            <div class="stat-card">
+                <h3>Average Fare</h3>
+                <p class="stat-value" id="avg-fare">Loading...</p>
+            </div>
+            <div class="stat-card">
+                <h3>Average Tip</h3>
+                <p class="stat-value" id="avg-tip">Loading...</p>
+            </div>
+            <div class="stat-card">
+                <h3>Date Range</h3>
+                <p class="stat-value small" id="date-range">Loading...</p>
+            </div>
+        </section>
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <!-- Overview Section -->
-        <section id="overview-section" class="view-section active">
-            <div class="container">
-                <!-- Stats Grid -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-label">Total Trips</div>
-                        <div class="stat-value" id="total-trips">Loading...</div>
-                        <div class="stat-change" id="trip-change"></div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Average Fare</div>
-                        <div class="stat-value" id="avg-fare">Loading...</div>
-                        <div class="stat-change" id="fare-change"></div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Average Distance</div>
-                        <div class="stat-value" id="avg-distance">Loading...</div>
-                        <div class="stat-change">miles per trip</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Tip Rate</div>
-                        <div class="stat-value" id="avg-tip">Loading...</div>
-                        <div class="stat-change">average gratuity</div>
-                    </div>
+        <!-- Filter Controls -->
+        <section class="filters">
+            <h2>Filter Trip Data</h2>
+            <div class="filter-grid">
+                <div class="filter-group">
+                    <label for="filter-start-date">Start Date</label>
+                    <input type="date" id="filter-start-date">
                 </div>
-
-                <!-- Key Insights -->
-                <div class="insights-section">
-                    <h2 class="section-title">Key Insights</h2>
-                    <div class="insights-grid">
-                        <div class="insight-card">
-                            <h3 class="insight-title">Peak Commute Hours</h3>
-                            <p class="insight-text">Traffic peaks between 8-9 AM and 5-7 PM on weekdays, with Monday and Friday showing 18% higher volumes than mid-week days.</p>
-                            <div class="insight-data">
-                                <span class="data-point">8-9 AM: <strong id="morning-peak">Loading...</strong> trips</span>
-                                <span class="data-point">5-7 PM: <strong id="evening-peak">Loading...</strong> trips</span>
-                            </div>
-                        </div>
-                        <div class="insight-card">
-                            <h3 class="insight-title">Manhattan Dominance</h3>
-                            <p class="insight-text">Manhattan accounts for 68% of all pickups and 72% of dropoffs, with Midtown and Upper East Side as primary hubs.</p>
-                            <div class="insight-data">
-                                <span class="data-point">Top Zone: <strong id="top-zone">Loading...</strong></span>
-                                <span class="data-point">Activity: <strong id="top-zone-count">Loading...</strong> trips</span>
-                            </div>
-                        </div>
-                        <div class="insight-card">
-                            <h3 class="insight-title">Payment Patterns</h3>
-                            <p class="insight-text">Credit card users tip 22% on average compared to 4% for cash payments, suggesting digital payments encourage higher gratuities.</p>
-                            <div class="insight-data">
-                                <span class="data-point">Credit tip: <strong id="credit-tip">Loading...</strong>%</span>
-                                <span class="data-point">Cash tip: <strong id="cash-tip">Loading...</strong>%</span>
-                            </div>
-                        </div>
-                    </div>
+                <div class="filter-group">
+                    <label for="filter-end-date">End Date</label>
+                    <input type="date" id="filter-end-date">
                 </div>
+                <div class="filter-group">
+                    <label for="filter-min-distance">Min Distance (miles)</label>
+                    <input type="number" id="filter-min-distance" step="0.1" placeholder="0.0">
+                </div>
+                <div class="filter-group">
+                    <label for="filter-max-distance">Max Distance (miles)</label>
+                    <input type="number" id="filter-max-distance" step="0.1" placeholder="100.0">
+                </div>
+                <div class="filter-group">
+                    <label for="filter-min-fare">Min Fare ($)</label>
+                    <input type="number" id="filter-min-fare" step="0.1" placeholder="0.0">
+                </div>
+                <div class="filter-group">
+                    <label for="filter-max-fare">Max Fare ($)</label>
+                    <input type="number" id="filter-max-fare" step="0.1" placeholder="500.0">
+                </div>
+                <div class="filter-group">
+                    <label for="filter-hour">Hour of Day</label>
+                    <select id="filter-hour">
+                        <option value="">All Hours</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-weekend">Weekend Only</label>
+                    <select id="filter-weekend">
+                        <option value="">All Days</option>
+                        <option value="true">Weekend</option>
+                        <option value="false">Weekday</option>
+                    </select>
+                </div>
+            </div>
+            <div class="filter-actions">
+                <button id="apply-filters" class="btn btn-primary">Apply Filters</button>
+                <button id="clear-filters" class="btn btn-secondary">Clear Filters</button>
+            </div>
+        </section>
 
-                <!-- Quick Charts -->
-                <div class="charts-row">
-                    <div class="chart-card">
-                        <h3 class="chart-title">Hourly Trip Distribution</h3>
-                        <div class="chart-container">
-                            <canvas id="hourly-chart"></canvas>
-                        </div>
-                    </div>
-                    <div class="chart-card">
-                        <h3 class="chart-title">Borough Flow Matrix</h3>
-                        <div class="chart-container">
-                            <canvas id="borough-chart"></canvas>
-                        </div>
-                    </div>
+        <!-- Visualization Tabs -->
+        <section class="tabs">
+            <div class="tab-buttons">
+                <button class="tab-button active" data-tab="hourly">Hourly Patterns</button>
+                <button class="tab-button" data-tab="borough">Borough Analysis</button>
+                <button class="tab-button" data-tab="routes">Popular Routes</button>
+                <button class="tab-button" data-tab="weekend">Weekend vs Weekday</button>
+                <button class="tab-button" data-tab="payment">Payment Analysis</button>
+                <button class="tab-button" data-tab="trips">Trip Details</button>
+            </div>
+
+            <!-- Tab Content -->
+            <div id="hourly" class="tab-content active">
+                <h2>Trip Patterns by Hour of Day</h2>
+                <div class="chart-container">
+                    <canvas id="hourly-chart"></canvas>
+                </div>
+                <div class="insights">
+                    <h3>Key Insights</h3>
+                    <div id="hourly-insights">Loading insights...</div>
+                </div>
+            </div>
+
+            <div id="borough" class="tab-content">
+                <h2>Trip Analysis by Borough</h2>
+                <div class="chart-container">
+                    <canvas id="borough-chart"></canvas>
+                </div>
+                <div class="insights">
+                    <h3>Key Insights</h3>
+                    <div id="borough-insights">Loading insights...</div>
+                </div>
+            </div>
+
+            <div id="routes" class="tab-content">
+                <h2>Most Popular Routes</h2>
+                <div class="table-container">
+                    <table id="routes-table">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Pickup Location</th>
+                                <th>Dropoff Location</th>
+                                <th>Trip Count</th>
+                                <th>Avg Distance</th>
+                                <th>Avg Fare</th>
+                            </tr>
+                        </thead>
+                        <tbody id="routes-tbody">
+                            <tr><td colspan="6">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="weekend" class="tab-content">
+                <h2>Weekend vs Weekday Comparison</h2>
+                <div class="chart-container">
+                    <canvas id="weekend-chart"></canvas>
+                </div>
+                <div class="comparison-grid" id="weekend-comparison">
+                    Loading comparison...
+                </div>
+            </div>
+
+            <div id="payment" class="tab-content">
+                <h2>Payment Type Analysis</h2>
+                <div class="chart-container">
+                    <canvas id="payment-chart"></canvas>
+                </div>
+                <div class="insights">
+                    <h3>Payment Insights</h3>
+                    <div id="payment-insights">Loading insights...</div>
+                </div>
+            </div>
+
+            <div id="trips" class="tab-content">
+                <h2>Individual Trip Records</h2>
+                <div class="table-container">
+                    <table id="trips-table">
+                        <thead>
+                            <tr>
+                                <th>Pickup Time</th>
+                                <th>Pickup Location</th>
+                                <th>Dropoff Location</th>
+                                <th>Distance</th>
+                                <th>Duration</th>
+                                <th>Fare</th>
+                                <th>Tip %</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trips-tbody">
+                            <tr><td colspan="7">Apply filters to view trips</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pagination">
+                    <button id="prev-page" class="btn btn-secondary">Previous</button>
+                    <span id="page-info">Page 1</span>
+                    <button id="next-page" class="btn btn-secondary">Next</button>
                 </div>
             </div>
         </section>
 
-        <!-- Temporal Analysis Section -->
-        <section id="temporal-section" class="view-section">
-            <div class="container">
-                <h2 class="section-title">Temporal Patterns</h2>
-                
-                <div class="filter-bar">
-                    <div class="filter-group">
-                        <label>Date Range</label>
-                        <input type="date" id="start-date" class="filter-input">
-                        <span class="filter-separator">to</span>
-                        <input type="date" id="end-date" class="filter-input">
-                    </div>
-                    <button class="filter-btn" id="apply-filters">Apply Filters</button>
-                    <button class="filter-btn secondary" id="reset-filters">Reset</button>
-                </div>
-
-                <div class="charts-grid">
-                    <div class="chart-card full-width">
-                        <h3 class="chart-title">24-Hour Activity Heatmap</h3>
-                        <div class="chart-container large">
-                            <canvas id="heatmap-chart"></canvas>
-                        </div>
-                    </div>
-                    
-                    <div class="chart-card">
-                        <h3 class="chart-title">Day of Week Patterns</h3>
-                        <div class="chart-container">
-                            <canvas id="dow-chart"></canvas>
-                        </div>
-                    </div>
-                    
-                    <div class="chart-card">
-                        <h3 class="chart-title">Weekend vs Weekday</h3>
-                        <div class="chart-container">
-                            <canvas id="weekend-chart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Spatial Analysis Section -->
-        <section id="spatial-section" class="view-section">
-            <div class="container">
-                <h2 class="section-title">Spatial Analysis</h2>
-                
-                <div class="map-controls">
-                    <div class="control-group">
-                        <label>View Mode</label>
-                        <select id="map-mode" class="control-select">
-                            <option value="pickups">Pickup Density</option>
-                            <option value="dropoffs">Dropoff Density</option>
-                            <option value="flow">Origin-Destination Flow</option>
-                        </select>
-                    </div>
-                    <div class="control-group">
-                        <label>Borough</label>
-                        <select id="borough-filter" class="control-select">
-                            <option value="all">All Boroughs</option>
-                            <option value="Manhattan">Manhattan</option>
-                            <option value="Brooklyn">Brooklyn</option>
-                            <option value="Queens">Queens</option>
-                            <option value="Bronx">Bronx</option>
-                            <option value="Staten Island">Staten Island</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="spatial-grid">
-                    <div class="zone-table-card">
-                        <h3 class="chart-title">Top Zones by Activity</h3>
-                        <div class="table-container" id="zone-table-container">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Rank</th>
-                                        <th>Zone</th>
-                                        <th>Borough</th>
-                                        <th>Pickups</th>
-                                        <th>Dropoffs</th>
-                                        <th>Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="zone-table-body">
-                                    <tr><td colspan="6" class="loading-row">Loading data...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div class="chart-card">
-                        <h3 class="chart-title">Zone Activity Distribution</h3>
-                        <div class="chart-container">
-                            <canvas id="zone-dist-chart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Economic Analysis Section -->
-        <section id="economic-section" class="view-section">
-            <div class="container">
-                <h2 class="section-title">Economic Analysis</h2>
-                
-                <div class="financial-grid">
-                    <div class="financial-card">
-                        <div class="financial-label">Total Revenue</div>
-                        <div class="financial-value" id="total-revenue">Loading...</div>
-                    </div>
-                    <div class="financial-card">
-                        <div class="financial-label">Total Tips</div>
-                        <div class="financial-value" id="total-tips">Loading...</div>
-                    </div>
-                    <div class="financial-card">
-                        <div class="financial-label">Avg Fare/Mile</div>
-                        <div class="financial-value" id="fare-per-mile">Loading...</div>
-                    </div>
-                </div>
-
-                <div class="charts-grid">
-                    <div class="chart-card">
-                        <h3 class="chart-title">Payment Type Distribution</h3>
-                        <div class="chart-container">
-                            <canvas id="payment-chart"></canvas>
-                        </div>
-                    </div>
-                    
-                    <div class="chart-card">
-                        <h3 class="chart-title">Fare vs Distance</h3>
-                        <div class="chart-container">
-                            <canvas id="fare-distance-chart"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="chart-card full-width">
-                        <h3 class="chart-title">Tip Analysis by Payment Method</h3>
-                        <div class="chart-container">
-                            <canvas id="tip-analysis-chart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <!-- Footer -->
-    <footer class="main-footer">
-        <div class="container">
-            <div class="footer-content">
-                <p class="footer-text">Data sourced from NYC Taxi & Limousine Commission</p>
-                <p class="footer-text">Built for urban mobility analysis and research</p>
-            </div>
-        </div>
-    </footer>
-
-    <!-- Loading Overlay -->
-    <div id="loading-overlay" class="loading-overlay">
-        <div class="loading-spinner"></div>
-        <p class="loading-text">Loading data...</p>
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Urban Mobility Data Explorer | NYC Taxi & Limousine Commission Data</p>
+            <p>Data processed and analyzed using custom algorithms and PostgreSQL</p>
+        </footer>
     </div>
 
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="js/config.js"></script>
-    <script src="js/api.js"></script>
-    <script src="js/charts.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/app.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
