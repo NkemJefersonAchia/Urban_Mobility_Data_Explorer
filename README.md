@@ -29,7 +29,7 @@ The video walkthrough demonstrates:
 
 ## Team Information
 
-**Team Name:** [Your Team Name]
+**Team Name:** Team 5
 
 **Team Members:**
 - Nkem Jeferson Achia
@@ -102,16 +102,16 @@ The application processes the NYC Taxi & Limousine Commission dataset, including
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                         Frontend Layer                       │
-│  ┌─────────────┐  ┌──────────────┐  ┌──────────────────┐   │
-│  │  HTML/CSS   │  │  JavaScript  │  │   Chart.js       │   │
-│  │  Dashboard  │  │  Controller  │  │  Visualizations  │   │
-│  └─────────────┘  └──────────────┘  └──────────────────┘   │
+│                         Frontend Layer                      │
+│  ┌─────────────┐  ┌──────────────┐  ┌──────────────────┐    │
+│  │  HTML/CSS   │  │  JavaScript  │  │   Chart.js       │    │
+│  │  Dashboard  │  │  Controller  │  │  Visualizations  │    │
+│  └─────────────┘  └──────────────┘  └──────────────────┘    │
 └───────────────────────────┬─────────────────────────────────┘
                             │ HTTP/REST
                             ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                      Backend API Layer                       │
+│                      Backend API Layer                      │
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │              Flask REST API (app.py)                 │   │
 │  │  - /api/statistics    - /api/borough-analysis        │   │
@@ -122,18 +122,18 @@ The application processes the NYC Taxi & Limousine Commission dataset, including
                             │ SQL Queries
                             ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                      Database Layer                          │
-│  ┌──────────────┐  ┌─────────────┐  ┌──────────────────┐   │
-│  │  trip_facts  │  │ taxi_zones  │  │ zone_geometries  │   │
-│  │  (Fact)      │  │ (Dimension) │  │   (Spatial)      │   │
-│  └──────────────┘  └─────────────┘  └──────────────────┘   │
-│                    PostgreSQL Database                       │
+│                      Database Layer                         │
+│  ┌──────────────┐  ┌─────────────┐  ┌──────────────────┐    │
+│  │  trip_facts  │  │ taxi_zones  │  │ zone_geometries  │    │
+│  │  (Fact)      │  │ (Dimension) │  │   (Spatial)      │    │
+│  └──────────────┘  └─────────────┘  └──────────────────┘    │
+│                    PostgreSQL Database                      │
 └─────────────────────────────────────────────────────────────┘
                             ▲
                             │ ETL Pipeline
                             │
 ┌─────────────────────────────────────────────────────────────┐
-│                   Data Processing Layer                      │
+│                   Data Processing Layer                     │
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │         Data Processor (data_processor.py)           │   │
 │  │  - Data Loading     - Outlier Detection (Custom)     │   │
