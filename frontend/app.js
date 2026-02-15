@@ -1,47 +1,130 @@
+/**
+ * Urban Mobility Data Explorer - Frontend Application
+ * Handles API interactions, data visualization, and user interactions
+ */
 
 // Configuration
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'http://127.0.0.1:5000/api';
 const RECORDS_PER_PAGE = 50;
+
+// Session auth credentials
+const API_USERNAME = 'admin';
+const API_PASSWORD = 'admin123';
 
 // State management
 let currentPage = 1;
 let charts = {};
 
 /**
+ * Login to the application
+ */
+async function login() {
+    try {
+        console.log('Attempting login...');
+        const res = await fetch(`${API_BASE_URL}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ username: API_USERNAME, password: API_PASSWORD })
+        });
+
+        console.log('Login response status:', res.status);
+        const data = await res.json();
+        console.log('Login response data:', data);
+
+        if (!res.ok) throw new Error(`Login failed: ${data.error || res.statusText}`);
+        console.log('Login successful');
+        return data;
+    } catch (error) {
+        console.error('Login error:', error);
+        throw error;
+    }
+}
+
+/**
+ * Fetch with session authentication
+ */
+async function authenticatedFetch(url, options = {}) {
+    const opts = {
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json',
+            ...(options.headers || {})
+        },
+        ...options
+    };
+
+    let response = await fetch(url, opts);
+
+    if (response.status === 401) {
+        await login();
+        response = await fetch(url, opts);
+    }
+
+    return response;
+}
+
+/**
+ * Fetch JSON with error handling
+ */
+async function fetchJson(url, options = {}) {
+    const res = await authenticatedFetch(url, options);
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `HTTP ${res.status}`);
+    }
+    return res.json();
+}
+
+/**
  * Initialize the application
  */
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Initializing Urban Mobility Data Explorer...');
-    
-    // Populate hour dropdown
-    populateHourDropdown();
-    
-    // Load initial data
-    loadStatistics();
-    loadHourlyAnalysis();
-    loadBoroughAnalysis();
-    loadPopularRoutes();
-    loadWeekendComparison();
-    loadPaymentAnalysis();
-    
-    // Set up event listeners
-    setupEventListeners();
+    initializeApp();
 });
+
+/**
+ * Bootstraps app after login
+ */
+async function initializeApp() {
+    try {
+        console.log('Starting app initialization...');
+        await login();
+        console.log('Login complete, populating dropdown...');
+        
+        populateHourDropdown();
+        
+        console.log('Loading all data...');
+        // Load all data in parallel
+        await Promise.all([
+            loadStatistics(),
+            loadHourlyAnalysis(),
+            loadBoroughAnalysis(),
+            loadPopularRoutes(),
+            loadPaymentAnalysis()
+        ]);
+        
+        console.log('Data loaded, setting up listeners...');
+        setupEventListeners();
+        console.log('App ready');
+    } catch (error) {
+        console.error('Initialization failed:', error);
+        showError('Failed to initialize app');
+    }
+}
 
 /**
  * Set up all event listeners
  */
 function setupEventListeners() {
-    // Tab switching
     document.querySelectorAll('.tab-button').forEach(button => {
         button.addEventListener('click', () => switchTab(button));
     });
     
-    // Filter controls
     document.getElementById('apply-filters').addEventListener('click', applyFilters);
     document.getElementById('clear-filters').addEventListener('click', clearFilters);
     
-    // Pagination
     document.getElementById('prev-page').addEventListener('click', () => changePage(-1));
     document.getElementById('next-page').addEventListener('click', () => changePage(1));
 }
@@ -63,17 +146,11 @@ function populateHourDropdown() {
  * Switch between tabs
  */
 function switchTab(button) {
-    // Update active button
-    document.querySelectorAll('.tab-button').forEach(btn => {
-        btn.classList.remove('active');
-    });
+    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
     button.classList.add('active');
     
-    // Update active content
     const tabName = button.getAttribute('data-tab');
-    document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
-    });
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
     document.getElementById(tabName).classList.add('active');
 }
 
@@ -82,8 +159,7 @@ function switchTab(button) {
  */
 async function loadStatistics() {
     try {
-        const response = await fetch(`${API_BASE_URL}/statistics`);
-        const data = await response.json();
+        const data = await fetchJson(`${API_BASE_URL}/summary`);
         
         document.getElementById('total-trips').textContent = 
             data.total_trips?.toLocaleString() || 'N/A';
@@ -94,7 +170,7 @@ async function loadStatistics() {
         document.getElementById('avg-fare').textContent = 
             `$${data.avg_fare?.toFixed(2) || '0.00'}`;
         document.getElementById('avg-tip').textContent = 
-            `${data.avg_tip_percentage?.toFixed(1) || '0.0'}%`;
+            `${data.avg_tip_pct?.toFixed(1) || '0.0'}%`;
         
         if (data.earliest_trip && data.latest_trip) {
             const earliest = new Date(data.earliest_trip).toLocaleDateString();
@@ -110,27 +186,66 @@ async function loadStatistics() {
 }
 
 /**
+ * Normalizers
+ */
+function normalizeHourlyRow(d) {
+    return {
+        hour: d.hour_of_day ?? d.pickup_hour ?? d.hour ?? 0,
+        trip_count: d.trip_count ?? d.total_trips ?? 0,
+        avg_fare: parseFloat(d.avg_fare ?? d.average_fare ?? 0),
+        avg_tip_percentage: parseFloat(d.avg_tip_pct ?? d.avg_tip_percentage ?? d.avg_tip ?? 0)
+    };
+}
+
+function normalizeBoroughRow(d) {
+    return {
+        borough: d.borough ?? d.Borough ?? d.pu_borough ?? 'Unknown',
+        trip_count: d.trip_count ?? d.total_trips ?? 0,
+        avg_fare: parseFloat(d.avg_fare ?? d.average_fare ?? 0).toFixed(2),
+        avg_tip_percentage: parseFloat(d.avg_tip_pct ?? d.avg_tip_percentage ?? d.avg_tip ?? 0).toFixed(1)
+    };
+}
+
+function normalizeRouteRow(d) {
+    return {
+        pickup_zone: d.pickup_zone ?? d.pu_zone ?? d.Zone ?? 'Unknown',
+        pickup_borough: d.pickup_borough ?? d.pu_borough ?? d.Borough ?? 'Unknown',
+        dropoff_zone: d.dropoff_zone ?? d.do_zone ?? d.dropoff ?? 'N/A',
+        dropoff_borough: d.dropoff_borough ?? d.do_borough ?? 'N/A',
+        trip_count: d.trip_count ?? d.total_trips ?? 0,
+        avg_distance: parseFloat(d.avg_distance ?? d.average_distance ?? 0).toFixed(2),
+        avg_fare: parseFloat(d.avg_fare ?? d.average_fare ?? 0).toFixed(2)
+    };
+}
+
+function normalizeTripRow(d) {
+    return {
+        pickup_datetime: d.pickup_datetime ?? d.tpep_pickup_datetime,
+        pickup_zone: d.pickup_zone ?? d.pu_zone ?? 'Unknown',
+        dropoff_zone: d.dropoff_zone ?? d.do_zone ?? 'N/A',
+        trip_distance: d.trip_distance ?? 0,
+        trip_duration_minutes: d.trip_duration_minutes ?? d.duration_mins ?? 0,
+        total_amount: d.total_amount ?? d.fare_amount ?? 0,
+        tip_percentage: d.tip_percentage ?? 0
+    };
+}
+
+/**
  * Load and visualize hourly analysis
  */
 async function loadHourlyAnalysis() {
     try {
-        const response = await fetch(`${API_BASE_URL}/hourly-analysis`);
-        const data = await response.json();
-        const hourlyData = data.hourly_analysis;
+        const data = await fetchJson(`${API_BASE_URL}/hourly-patterns`);
+        const hourlyData = (Array.isArray(data) ? data : data.hourly_analysis || []).map(normalizeHourlyRow);
         
-        // Prepare chart data
-        const hours = hourlyData.map(d => `${d.hour_of_day}:00`);
+        if (hourlyData.length === 0) return;
+
+        const hours = hourlyData.map(d => `${d.hour}:00`);
         const tripCounts = hourlyData.map(d => d.trip_count);
-        const avgFares = hourlyData.map(d => parseFloat(d.avg_fare));
-        const avgTips = hourlyData.map(d => parseFloat(d.avg_tip_percentage));
+        const avgFares = hourlyData.map(d => d.avg_fare);
         
-        // Create chart
         const ctx = document.getElementById('hourly-chart').getContext('2d');
-        
-        // Destroy existing chart if it exists
-        if (charts.hourly) {
-            charts.hourly.destroy();
-        }
+        if (charts.hourly) charts.hourly.destroy();
         
         charts.hourly = new Chart(ctx, {
             type: 'line',
@@ -158,61 +273,26 @@ async function loadHourlyAnalysis() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                interaction: {
-                    mode: 'index',
-                    intersect: false,
-                },
-                plugins: {
-                    legend: {
-                        position: 'top',
-                    },
-                    title: {
-                        display: false
-                    }
-                },
+                interaction: { mode: 'index', intersect: false },
+                plugins: { legend: { position: 'top' }, title: { display: false } },
                 scales: {
-                    y: {
-                        type: 'linear',
-                        display: true,
-                        position: 'left',
-                        title: {
-                            display: true,
-                            text: 'Trip Count'
-                        }
-                    },
-                    y1: {
-                        type: 'linear',
-                        display: true,
-                        position: 'right',
-                        title: {
-                            display: true,
-                            text: 'Average Fare ($)'
-                        },
-                        grid: {
-                            drawOnChartArea: false,
-                        }
-                    }
+                    y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Trip Count' } },
+                    y1: { type: 'linear', display: true, position: 'right', title: { display: true, text: 'Average Fare ($)' }, grid: { drawOnChartArea: false } }
                 }
             }
         });
         
-        // Generate insights
-        const peakHour = hourlyData.reduce((max, d) => 
-            d.trip_count > max.trip_count ? d : max
-        );
-        const lowHour = hourlyData.reduce((min, d) => 
-            d.trip_count < min.trip_count ? d : min
-        );
+        const peakHour = hourlyData.reduce((max, d) => d.trip_count > max.trip_count ? d : max);
+        const lowHour = hourlyData.reduce((min, d) => d.trip_count < min.trip_count ? d : min);
         
-        const insightsHTML = `
+        document.getElementById('hourly-insights').innerHTML = `
             <ul>
-                <li>Peak hour: ${peakHour.hour_of_day}:00 with ${peakHour.trip_count.toLocaleString()} trips</li>
-                <li>Quietest hour: ${lowHour.hour_of_day}:00 with ${lowHour.trip_count.toLocaleString()} trips</li>
-                <li>Morning rush (7-9 AM) and evening rush (5-7 PM) show distinct peaks in trip volume</li>
-                <li>Late night hours (1-5 AM) have significantly lower trip counts but higher average fares</li>
+                <li>Peak hour: ${peakHour.hour}:00 with ${peakHour.trip_count.toLocaleString()} trips</li>
+                <li>Quietest hour: ${lowHour.hour}:00 with ${lowHour.trip_count.toLocaleString()} trips</li>
+                <li>Morning rush (7-9 AM) and evening rush (5-7 PM) show distinct peaks</li>
+                <li>Late night hours have lower volume but higher average fares</li>
             </ul>
         `;
-        document.getElementById('hourly-insights').innerHTML = insightsHTML;
         
         console.log('Hourly analysis loaded successfully');
     } catch (error) {
@@ -226,20 +306,16 @@ async function loadHourlyAnalysis() {
  */
 async function loadBoroughAnalysis() {
     try {
-        const response = await fetch(`${API_BASE_URL}/borough-analysis`);
-        const data = await response.json();
-        const boroughData = data.borough_analysis;
+        const data = await fetchJson(`${API_BASE_URL}/borough-analysis`);
+        const boroughData = (Array.isArray(data) ? data : data.borough_analysis || []).map(normalizeBoroughRow);
         
-        // Prepare chart data
+        if (boroughData.length === 0) return;
+
         const boroughs = boroughData.map(d => d.borough);
         const tripCounts = boroughData.map(d => d.trip_count);
         
-        // Create chart
         const ctx = document.getElementById('borough-chart').getContext('2d');
-        
-        if (charts.borough) {
-            charts.borough.destroy();
-        }
+        if (charts.borough) charts.borough.destroy();
         
         charts.borough = new Chart(ctx, {
             type: 'bar',
@@ -248,57 +324,31 @@ async function loadBoroughAnalysis() {
                 datasets: [{
                     label: 'Trip Count',
                     data: tripCounts,
-                    backgroundColor: [
-                        'rgba(102, 126, 234, 0.8)',
-                        'rgba(118, 75, 162, 0.8)',
-                        'rgba(237, 100, 166, 0.8)',
-                        'rgba(255, 154, 158, 0.8)',
-                        'rgba(250, 208, 196, 0.8)'
-                    ],
-                    borderColor: [
-                        '#667eea',
-                        '#764ba2',
-                        '#ed64a6',
-                        '#ff9a9e',
-                        '#fad0c4'
-                    ],
+                    backgroundColor: ['rgba(102, 126, 234, 0.8)', 'rgba(118, 75, 162, 0.8)', 'rgba(237, 100, 166, 0.8)', 'rgba(255, 154, 158, 0.8)', 'rgba(250, 208, 196, 0.8)'],
+                    borderColor: ['#667eea', '#764ba2', '#ed64a6', '#ff9a9e', '#fad0c4'],
                     borderWidth: 2
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Number of Trips'
-                        }
-                    }
-                }
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
             }
         });
         
-        // Generate insights
         const topBorough = boroughData[0];
         const totalTrips = boroughData.reduce((sum, d) => sum + d.trip_count, 0);
-        const topPercentage = ((topBorough.trip_count / totalTrips) * 100).toFixed(1);
+        const topPercentage = totalTrips ? ((topBorough.trip_count / totalTrips) * 100).toFixed(1) : 0;
         
-        const insightsHTML = `
+        document.getElementById('borough-insights').innerHTML = `
             <ul>
-                <li>${topBorough.borough} has the highest trip volume with ${topBorough.trip_count.toLocaleString()} trips (${topPercentage}% of total)</li>
+                <li>${topBorough.borough} has highest volume: ${topBorough.trip_count.toLocaleString()} trips (${topPercentage}%)</li>
                 <li>Average fare varies by borough: ${topBorough.borough} averages $${topBorough.avg_fare}</li>
-                <li>Manhattan typically shows higher trip density due to its central business district location</li>
-                <li>Tip percentages are relatively consistent across boroughs, averaging ${topBorough.avg_tip_percentage}%</li>
+                <li>Manhattan shows higher trip density from central business district</li>
+                <li>Tip percentages consistent across boroughs: ${topBorough.avg_tip_percentage}%</li>
             </ul>
         `;
-        document.getElementById('borough-insights').innerHTML = insightsHTML;
         
         console.log('Borough analysis loaded successfully');
     } catch (error) {
@@ -312,12 +362,16 @@ async function loadBoroughAnalysis() {
  */
 async function loadPopularRoutes() {
     try {
-        const response = await fetch(`${API_BASE_URL}/popular-routes?limit=20`);
-        const data = await response.json();
-        const routes = data.popular_routes;
-        
+        const data = await fetchJson(`${API_BASE_URL}/top-routes?limit=20`);
+        const routes = (Array.isArray(data) ? data : data.popular_routes || []).map(normalizeRouteRow);
+
         const tbody = document.getElementById('routes-tbody');
         tbody.innerHTML = '';
+        
+        if (routes.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6">No route data available</td></tr>';
+            return;
+        }
         
         routes.forEach((route, index) => {
             const row = tbody.insertRow();
@@ -339,149 +393,21 @@ async function loadPopularRoutes() {
 }
 
 /**
- * Load weekend comparison
- */
-async function loadWeekendComparison() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/weekend-comparison`);
-        const data = await response.json();
-        const comparison = data.weekend_comparison;
-        
-        // Create chart
-        const ctx = document.getElementById('weekend-chart').getContext('2d');
-        
-        if (charts.weekend) {
-            charts.weekend.destroy();
-        }
-        
-        charts.weekend = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Trip Count', 'Avg Distance (mi)', 'Avg Duration (min)', 'Avg Fare ($)', 'Avg Tip (%)'],
-                datasets: [
-                    {
-                        label: 'Weekday',
-                        data: [
-                            comparison.weekday?.trip_count || 0,
-                            parseFloat(comparison.weekday?.avg_distance) || 0,
-                            parseFloat(comparison.weekday?.avg_duration) || 0,
-                            parseFloat(comparison.weekday?.avg_fare) || 0,
-                            parseFloat(comparison.weekday?.avg_tip_percentage) || 0
-                        ],
-                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
-                        borderColor: '#667eea',
-                        borderWidth: 2
-                    },
-                    {
-                        label: 'Weekend',
-                        data: [
-                            comparison.weekend?.trip_count || 0,
-                            parseFloat(comparison.weekend?.avg_distance) || 0,
-                            parseFloat(comparison.weekend?.avg_duration) || 0,
-                            parseFloat(comparison.weekend?.avg_fare) || 0,
-                            parseFloat(comparison.weekend?.avg_tip_percentage) || 0
-                        ],
-                        backgroundColor: 'rgba(118, 75, 162, 0.8)',
-                        borderColor: '#764ba2',
-                        borderWidth: 2
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-        
-        // Create comparison cards
-        const comparisonHTML = `
-            <div class="comparison-card">
-                <h3>Weekday Trips</h3>
-                <div class="metric">
-                    <span class="metric-label">Total Trips</span>
-                    <span class="metric-value">${comparison.weekday?.trip_count?.toLocaleString() || 'N/A'}</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">Avg Distance</span>
-                    <span class="metric-value">${comparison.weekday?.avg_distance || 'N/A'} mi</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">Avg Duration</span>
-                    <span class="metric-value">${comparison.weekday?.avg_duration || 'N/A'} min</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">Avg Fare</span>
-                    <span class="metric-value">$${comparison.weekday?.avg_fare || 'N/A'}</span>
-                </div>
-            </div>
-            <div class="comparison-card">
-                <h3>Weekend Trips</h3>
-                <div class="metric">
-                    <span class="metric-label">Total Trips</span>
-                    <span class="metric-value">${comparison.weekend?.trip_count?.toLocaleString() || 'N/A'}</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">Avg Distance</span>
-                    <span class="metric-value">${comparison.weekend?.avg_distance || 'N/A'} mi</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">Avg Duration</span>
-                    <span class="metric-value">${comparison.weekend?.avg_duration || 'N/A'} min</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">Avg Fare</span>
-                    <span class="metric-value">$${comparison.weekend?.avg_fare || 'N/A'}</span>
-                </div>
-            </div>
-        `;
-        document.getElementById('weekend-comparison').innerHTML = comparisonHTML;
-        
-        console.log('Weekend comparison loaded successfully');
-    } catch (error) {
-        console.error('Error loading weekend comparison:', error);
-        showError('Failed to load weekend comparison');
-    }
-}
-
-/**
  * Load payment analysis
  */
 async function loadPaymentAnalysis() {
     try {
-        const response = await fetch(`${API_BASE_URL}/payment-analysis`);
-        const data = await response.json();
-        const paymentData = data.payment_analysis;
+        const data = await fetchJson(`${API_BASE_URL}/payment-analysis`);
+        const paymentData = Array.isArray(data) ? data : data.payment_analysis || [];
         
-        // Payment type mapping
-        const paymentTypes = {
-            1: 'Credit Card',
-            2: 'Cash',
-            3: 'No Charge',
-            4: 'Dispute',
-            5: 'Unknown',
-            6: 'Voided Trip'
-        };
-        
-        // Prepare chart data
+        if (paymentData.length === 0) return;
+
+        const paymentTypes = { 1: 'Credit Card', 2: 'Cash', 3: 'No Charge', 4: 'Dispute', 5: 'Unknown', 6: 'Voided Trip' };
         const labels = paymentData.map(d => paymentTypes[d.payment_type] || `Type ${d.payment_type}`);
         const tripCounts = paymentData.map(d => d.trip_count);
         
-        // Create chart
         const ctx = document.getElementById('payment-chart').getContext('2d');
-        
-        if (charts.payment) {
-            charts.payment.destroy();
-        }
+        if (charts.payment) charts.payment.destroy();
         
         charts.payment = new Chart(ctx, {
             type: 'doughnut',
@@ -489,43 +415,26 @@ async function loadPaymentAnalysis() {
                 labels: labels,
                 datasets: [{
                     data: tripCounts,
-                    backgroundColor: [
-                        'rgba(102, 126, 234, 0.8)',
-                        'rgba(118, 75, 162, 0.8)',
-                        'rgba(237, 100, 166, 0.8)',
-                        'rgba(255, 154, 158, 0.8)',
-                        'rgba(250, 208, 196, 0.8)',
-                        'rgba(179, 229, 252, 0.8)'
-                    ],
+                    backgroundColor: ['rgba(102, 126, 234, 0.8)', 'rgba(118, 75, 162, 0.8)', 'rgba(237, 100, 166, 0.8)', 'rgba(255, 154, 158, 0.8)', 'rgba(250, 208, 196, 0.8)', 'rgba(179, 229, 252, 0.8)'],
                     borderColor: '#fff',
                     borderWidth: 2
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'right',
-                    }
-                }
-            }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
         });
         
-        // Generate insights
         const topPayment = paymentData[0];
         const totalTrips = paymentData.reduce((sum, d) => sum + d.trip_count, 0);
         const topPercentage = ((topPayment.trip_count / totalTrips) * 100).toFixed(1);
         
-        const insightsHTML = `
+        document.getElementById('payment-insights').innerHTML = `
             <ul>
-                <li>${paymentTypes[topPayment.payment_type]} is the most common payment method (${topPercentage}% of trips)</li>
-                <li>Credit card payments show higher average tip percentages (${topPayment.avg_tip_percentage}%) compared to cash</li>
-                <li>Average fare amount varies by payment type, with credit cards averaging $${topPayment.avg_fare}</li>
-                <li>Digital payment methods are becoming increasingly dominant in urban taxi usage</li>
+                <li>${paymentTypes[topPayment.payment_type]} most common (${topPercentage}% of trips)</li>
+                <li>Credit cards show higher tip rates vs cash</li>
+                <li>Average fare: $${topPayment.avg_fare} (${paymentTypes[topPayment.payment_type]})</li>
+                <li>Digital payments increasingly dominant</li>
             </ul>
         `;
-        document.getElementById('payment-insights').innerHTML = insightsHTML;
         
         console.log('Payment analysis loaded successfully');
     } catch (error) {
@@ -543,7 +452,6 @@ async function applyFilters() {
         params.append('limit', RECORDS_PER_PAGE);
         params.append('offset', (currentPage - 1) * RECORDS_PER_PAGE);
         
-        // Add filter parameters
         const startDate = document.getElementById('filter-start-date').value;
         const endDate = document.getElementById('filter-end-date').value;
         const minDistance = document.getElementById('filter-min-distance').value;
@@ -562,13 +470,12 @@ async function applyFilters() {
         if (hour) params.append('hour', hour);
         if (weekend) params.append('is_weekend', weekend);
         
-        const response = await fetch(`${API_BASE_URL}/trips?${params}`);
-        const data = await response.json();
-        
-        displayTrips(data.trips);
+        const data = await fetchJson(`${API_BASE_URL}/trips?${params}`);
+        const trips = (Array.isArray(data) ? data : data.trips || []).map(normalizeTripRow);
+        displayTrips(trips);
         updatePageInfo();
         
-        console.log(`Loaded ${data.trips.length} trips`);
+        console.log(`Loaded ${trips.length} trips`);
     } catch (error) {
         console.error('Error applying filters:', error);
         showError('Failed to load trips');
@@ -588,13 +495,12 @@ function displayTrips(trips) {
     }
     
     trips.forEach(trip => {
+        const pickupTime = trip.pickup_datetime ? new Date(trip.pickup_datetime).toLocaleString() : 'N/A';
         const row = tbody.insertRow();
-        const pickupTime = new Date(trip.pickup_datetime).toLocaleString();
-        
         row.innerHTML = `
             <td>${pickupTime}</td>
             <td>${trip.pickup_zone || 'Unknown'}</td>
-            <td>${trip.dropoff_zone || 'Unknown'}</td>
+            <td>${trip.dropoff_zone || 'N/A'}</td>
             <td>${trip.trip_distance} mi</td>
             <td>${trip.trip_duration_minutes} min</td>
             <td>$${trip.total_amount}</td>
@@ -607,32 +513,22 @@ function displayTrips(trips) {
  * Clear all filters
  */
 function clearFilters() {
-    document.getElementById('filter-start-date').value = '';
-    document.getElementById('filter-end-date').value = '';
-    document.getElementById('filter-min-distance').value = '';
-    document.getElementById('filter-max-distance').value = '';
-    document.getElementById('filter-min-fare').value = '';
-    document.getElementById('filter-max-fare').value = '';
-    document.getElementById('filter-hour').value = '';
-    document.getElementById('filter-weekend').value = '';
-    
+    document.querySelectorAll('[id^="filter-"]').forEach(el => el.value = '');
     currentPage = 1;
-    document.getElementById('trips-tbody').innerHTML = 
-        '<tr><td colspan="7">Apply filters to view trips</td></tr>';
+    document.getElementById('trips-tbody').innerHTML = '<tr><td colspan="7">Apply filters to view trips</td></tr>';
     updatePageInfo();
 }
 
 /**
- * Change page for trip listing
+ * Change page
  */
 function changePage(direction) {
-    currentPage += direction;
-    if (currentPage < 1) currentPage = 1;
+    currentPage = Math.max(1, currentPage + direction);
     applyFilters();
 }
 
 /**
- * Update page information
+ * Update page info
  */
 function updatePageInfo() {
     document.getElementById('page-info').textContent = `Page ${currentPage}`;
@@ -643,7 +539,6 @@ function updatePageInfo() {
  */
 function showError(message) {
     console.error(message);
-    // Could add a toast notification here
 }
 
 console.log('Urban Mobility Data Explorer initialized');
