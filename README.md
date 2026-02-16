@@ -2,19 +2,6 @@
 
 A full-stack web application for analyzing NYC taxi trip data, featuring advanced data processing, custom algorithms, and interactive visualizations.
 
-## Table of Contents
-- [Video Walkthrough](#video-walkthrough)
-- [Team Information](#team-information)
-- [Overview](#overview)
-- [Features](#features)
-- [Technology Stack](#technology-stack)
-- [System Architecture](#system-architecture)
-- [Installation](#installation)
-- [Usage](#usage)
-- [API Endpoints](#api-endpoints)
-- [Custom Algorithm Implementation](#custom-algorithm-implementation)
-
-
 ## Video Walkthrough
 
 **Video URL:** [Insert your video link here]
@@ -25,7 +12,6 @@ The video walkthrough demonstrates:
 3. Backend API functionality
 4. Frontend dashboard features
 5. Custom algorithm explanation
-6. Key insights from the data
 
 ## Team Information
 
@@ -34,6 +20,8 @@ The video walkthrough demonstrates:
 **Team Members:**
 - Nkem Jeferson Achia
 - Muhammed Awwal Achuja
+
+---
 
 ## Overview
 
@@ -44,17 +32,19 @@ The application processes the NYC Taxi & Limousine Commission dataset, including
 - Taxi zone dimension data (boroughs, service zones)
 - Spatial metadata (GeoJSON polygons)
 
+---
+
 ## Features
 
 ### Data Processing
 - Automated data cleaning and validation
-- Custom outlier detection algorithm (IQR-based with QuickSort)
+- Custom outlier detection algorithm (IQR-based with manual sorting)
 - Feature engineering (derived metrics)
 - Data quality logging and transparency
 
 ### Database Design
-- Normalized relational schema (PostgreSQL)
-- Optimized indexing for query performance
+- SQLite relational database
+- Optimized queries for analytical performance
 - Fact and dimension table structure
 - Data integrity constraints
 
@@ -67,8 +57,9 @@ The application processes the NYC Taxi & Limousine Commission dataset, including
 ### Frontend Dashboard
 - Interactive data visualizations (Chart.js)
 - Real-time filtering and sorting
-- Responsive design
-- Multiple analysis views (hourly, borough, routes, payment)
+- Responsive design with modern styling
+- Multiple analysis views (hourly, borough, routes, payment, weekend comparison)
+- Single unified JavaScript controller (`app.js`)
 
 ### Analytics Features
 - Hourly trip pattern analysis
@@ -76,37 +67,37 @@ The application processes the NYC Taxi & Limousine Commission dataset, including
 - Popular route identification
 - Weekend vs weekday comparison
 - Payment type analysis
-- Data quality monitoring
+- Speed and congestion analysis
+
+---
 
 ## Technology Stack
 
 ### Backend
-- **Language**: Python 3.8+
-- **Framework**: Flask 3.0.0
-- **Database**: PostgreSQL
-- **Data Processing**: Pandas, PyArrow
-- **Environment**: python-dotenv
+- **Language**: Python 3
+- **Framework**: Flask
+- **Database**: SQLite
+- **Data Processing**: Pandas, GeoPandas
 
 ### Frontend
 - **Languages**: HTML5, CSS3, JavaScript (ES6+)
-- **Visualization**: Chart.js 4.4.0
-- **Styling**: Custom CSS (no frameworks)
-- **Architecture**: Single-page application
+- **Visualization**: Chart.js
+- **Styling**: Custom CSS (modern design system)
+- **Architecture**: Single-page application (SPA) with unified `app.js` controller
 
-### Database
-- **RDBMS**: PostgreSQL 12+
-- **Schema**: Normalized relational design
-- **Features**: Indexing, constraints, foreign keys
+---
 
 ## System Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                         Frontend Layer                      │
-│  ┌─────────────┐  ┌──────────────┐  ┌──────────────────┐    │
-│  │  HTML/CSS   │  │  JavaScript  │  │   Chart.js       │    │
-│  │  Dashboard  │  │  Controller  │  │  Visualizations  │    │
-│  └─────────────┘  └──────────────┘  └──────────────────┘    │
+│  ┌─────────────┐  ┌──────────────────────────────────────┐  │
+│  │  index.html │  │  app.js (unified controller)         │  │
+│  │  styles.css │  │  - All API calls                     │  │
+│  │             │  │  - All visualizations (Chart.js)     │  │
+│  │             │  │  - All user interactions             │  │
+│  └─────────────┘  └──────────────────────────────────────┘  │
 └───────────────────────────┬─────────────────────────────────┘
                             │ HTTP/REST
                             ▼
@@ -114,20 +105,22 @@ The application processes the NYC Taxi & Limousine Commission dataset, including
 │                      Backend API Layer                      │
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │              Flask REST API (app.py)                 │   │
-│  │  - /api/statistics    - /api/borough-analysis        │   │
-│  │  - /api/trips         - /api/popular-routes          │   │
-│  │  - /api/hourly        - /api/weekend-comparison      │   │
+│  │  - /api/summary              - /api/borough-analysis │   │
+│  │  - /api/trips                - /api/top-routes       │   │
+│  │  - /api/hourly-patterns      - /api/payment-analysis │   │
+│  │  - /api/weekend-comparison   - /api/health           │   │
 │  └──────────────────────────────────────────────────────┘   │
+│                    (database_handler.py)                    │
 └───────────────────────────┬─────────────────────────────────┘
                             │ SQL Queries
                             ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                      Database Layer                         │
-│  ┌──────────────┐  ┌─────────────┐  ┌──────────────────┐    │
-│  │  trip_facts  │  │ taxi_zones  │  │ zone_geometries  │    │
-│  │  (Fact)      │  │ (Dimension) │  │   (Spatial)      │    │
-│  └──────────────┘  └─────────────┘  └──────────────────┘    │
-│                    PostgreSQL Database                      │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │              SQLite Database                         │   │
+│  │  Tables: trips (fact), zones (dimension)             │   │
+│  │  File: backend/processed/urban_mobility.db           │   │
+│  └──────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
                             ▲
                             │ ETL Pipeline
@@ -135,491 +128,439 @@ The application processes the NYC Taxi & Limousine Commission dataset, including
 ┌─────────────────────────────────────────────────────────────┐
 │                   Data Processing Layer                     │
 │  ┌──────────────────────────────────────────────────────┐   │
-│  │         Data Processor (data_processor.py)           │   │
+│  │         main.py (Data Pipeline)                      │   │
 │  │  - Data Loading     - Outlier Detection (Custom)     │   │
 │  │  - Data Cleaning    - Feature Engineering            │   │
-│  │  - Validation       - Quality Logging                │   │
+│  │  - Validation       - Database Creation              │   │
 │  └──────────────────────────────────────────────────────┘   │
+│             (custom_algorithms.py)                          │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## Installation
+---
+
+## Database
+
+**Engine:** SQLite  
+**Database File:** `backend/processed/urban_mobility.db`
+
+**Tables:**
+- `trips` (cleaned + engineered fact table)
+  - Columns: rowid (as id), tpep_pickup_datetime, tpep_dropoff_datetime, passenger_count, trip_distance, fare_amount, tip_amount, total_amount, payment_type, pu_borough, pu_zone, do_borough, do_zone, duration_mins, avg_speed_mph, tip_percentage, fare_range, distance_category, pickup_hour
+  
+- `zones` (dimension table)
+  - Columns: LocationID, Borough, Zone, service_zone
+
+---
+
+## Data Processing & Feature Engineering
+
+**Cleaning performed:**
+- Invalid distance, fare, passenger counts removed
+- Invalid or zero duration removed
+- Missing/null values handled
+- Outliers detected using custom IQR algorithm
+
+**Engineered features:**
+- `duration_mins` = dropoff time − pickup time
+- `avg_speed_mph` = trip distance / (duration in hours)
+- `tip_percentage` = tip / fare × 100
+- `pickup_hour` = hour of pickup timestamp
+- `fare_range` = categorical binning (0-5, 5-10, 10-20, 20-50, 50+)
+- `distance_category` = categorical binning (0-1, 1-3, 3-5, 5-10, 10+ miles)
+- `pu_zone/pu_borough` = pickup location from lookup table
+- `do_zone/do_borough` = dropoff location from lookup table
+
+---
+
+## Custom Algorithms (Manual Implementations)
+
+Located in `backend/custom_algorithms.py`
+
+### 1) CustomSort (QuickSort)
+- **Purpose:** Sort routes, trips, or any dataset by specified metric  
+- **Time Complexity:** O(n log n) average, O(n²) worst case  
+- **Space Complexity:** O(log n) for recursion stack
+
+### 2) OutlierDetector (IQR Method)
+- **Purpose:** Detect fare/distance outliers without built-in statistical functions  
+- **Algorithm:** Manual quartile calculation + manual sorting (no NumPy/Pandas stats)
+- **Time Complexity:** O(n log n) (dominated by sorting)  
+- **Space Complexity:** O(n) for sorted copy
+
+### 3) TripAggregator (Manual Grouping)
+- **Purpose:** Aggregate trips by hour without pandas `.groupby()`  
+- **Implementation:** Manual dictionary/list-based grouping  
+- **Time Complexity:** O(n)  
+- **Space Complexity:** O(k) where k = number of groups
+
+### 4) SpeedAnalyzer
+- **Purpose:** Detect congestion hours from hourly speed patterns  
+- **Time Complexity:** O(n)  
+- **Space Complexity:** O(1) fixed buckets
+
+---
+
+## Known Errors Faced (and Fixes)
+
+### 1) **Frontend not displaying data**
+**Cause:** Wrong port in `API_BASE_URL`  
+**Fix:** Ensure `app.js` has:
+```javascript
+const API_BASE_URL = 'http://127.0.0.1:5000/api';
+```
+NOT `localhost` or port 5500.
+
+### 2) **Trips not showing (empty table)**
+**Cause:** Database file doesn't exist or `trips` table was never created  
+**Solution:**
+- Confirm data files exist in `data/` folder
+- Run the pipeline: `python3 backend/main.py`
+- Wait for completion (creates `backend/processed/urban_mobility.db`)
+- Restart the API
+
+### 3) **"No such column: id" error**
+**Cause:** SQLite doesn't have explicit `id` column in trips table  
+**Fix:** Query uses `rowid as id` to work around this
+
+### 4) **CORS errors in browser console**
+**Cause:** Flask API not allowing cross-origin requests  
+**Fix:** `app.py` includes `CORS(app)` to allow frontend requests
+
+---
+
+## Step-by-Step: Run the Application
 
 ### Prerequisites
-- Python 3.8 or higher
-- PostgreSQL 12 or higher
-- pip (Python package manager)
-- Git
+- Python 3 installed
+- Data files in `data/` folder:
+  - `yellow_tripdata_2019-01.csv`
+  - `taxi_zone_lookup.csv`
+  - `taxi_zones.shp` (and related shapefile files)
 
-### Step 1: Clone the Repository
+### Step 1: Build the Database
+
+Run the data processing pipeline (this is required once):
+
 ```bash
-git clone <repository-url>
-cd urban-mobility-explorer
-```
-
-### Step 2: Set Up PostgreSQL Database
-```bash
-# Install PostgreSQL (if not already installed)
-# On Ubuntu/Debian:
-sudo apt-get update
-sudo apt-get install postgresql postgresql-contrib
-
-# On macOS:
-brew install postgresql
-
-# Start PostgreSQL service
-sudo service postgresql start  # Linux
-brew services start postgresql  # macOS
-
-# Create database
-sudo -u postgres psql
-CREATE DATABASE urban_mobility;
-CREATE USER your_user WITH PASSWORD 'your_password';
-GRANT ALL PRIVILEGES ON DATABASE urban_mobility TO your_user;
-\q
-```
-
-### Step 3: Set Up Python Environment
-```bash
-# Navigate to backend directory
 cd backend
-
-# Create virtual environment (recommended)
-python3 -m venv venv
-
-# Activate virtual environment
-source venv/bin/activate  # Linux/macOS
-venv\Scripts\activate     # Windows
-
-# Install dependencies
-pip install -r requirements.txt
+python3 main.py
 ```
 
-### Step 4: Configure Environment Variables
+**Output:**
+```
+Starting Urban Mobility Data Pipeline...
+Cleaning data...
+   - Cleaned X records.
+Engineering features...
+Saving to Database: backend/processed/urban_mobility.db...
+Exporting GeoJSON...
+
+TASK 1 & 2 COMPLETE!
+```
+
+This creates:
+- `backend/processed/urban_mobility.db` (SQLite database)
+- `backend/processed/taxi_zones_final.json` (GeoJSON for spatial use)
+
+**Verify the DB was created:**
 ```bash
-# Copy environment template
-cp .env.template .env
-
-# Edit .env file with your database credentials
-nano .env  # or use your preferred editor
+sqlite3 backend/processed/urban_mobility.db "SELECT COUNT(*) FROM trips;"
 ```
 
-Update the following variables in `.env`:
-```
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=urban_mobility
-DB_USER=your_user
-DB_PASSWORD=your_password
+Should return a number > 0 (total trip records).
 
-PARQUET_FILE=../data/yellow_tripdata.parquet
-ZONE_LOOKUP_FILE=../data/taxi_zone_lookup.csv
-ZONE_GEOMETRY_FILE=../data/taxi_zones.json
-```
-
-### Step 5: Download Data Files
-```bash
-# Create data directory
-mkdir -p ../data
-
-# Download the required files from NYC TLC website:
-# 1. yellow_tripdata.parquet - Trip records
-# 2. taxi_zone_lookup.csv - Zone lookup table
-# 3. taxi_zones.json - GeoJSON geometries
-
-# Place downloaded files in the data directory
-```
-
-### Step 6: Load Data into Database
-```bash
-# Run the data loading pipeline
-python load_data.py
-```
-
-This process will:
-1. Load raw data from Parquet and CSV files
-2. Clean and validate the data
-3. Apply custom outlier detection
-4. Engineer derived features
-5. Create database schema
-6. Insert all processed data
-7. Generate data quality reports
-
-Expected output:
-```
-URBAN MOBILITY DATA EXPLORER - DATA LOADING PIPELINE
-======================================================================
-
-STEP 1: Loading raw data files
-----------------------------------------------------------------------
-Loading data from ../data/yellow_tripdata.parquet...
-Loaded X records
-...
-
-DATA LOADING PIPELINE COMPLETED SUCCESSFULLY
-======================================================================
-```
-
-## Usage
-
-### Starting the Backend API
+### Step 2: Start the Backend API
 
 ```bash
-# Ensure you are in the backend directory with virtual environment activated
 cd backend
-source venv/bin/activate  # if not already activated
-
-# Start Flask server
-python app.py
+python3 app.py
 ```
 
-The API will be available at: `http://localhost:5000`
+**Output:**
+```
+ * Running on http://127.0.0.1:5000
+ * Debug mode: on
+```
 
-### Starting the Frontend
+API is now running at: `http://127.0.0.1:5000`
 
-Option 1: Using Python's built-in HTTP server
+### Step 3: Open the Frontend
+
+Option A: Open directly in browser
 ```bash
-# Navigate to frontend directory
+open frontend/index.html
+# or
+firefox frontend/index.html
+```
+
+Option B: Serve with a local HTTP server
+```bash
 cd frontend
-
-# Start HTTP server
-python3 -m http.server 8000
+python3 -m http.server 5500
+# Then open http://127.0.0.1:5500
 ```
 
-Option 2: Using any web server (nginx, Apache, etc.)
-Point your web server to the `frontend` directory.
+**Expected result:** Dashboard loads, filters work, charts display data.
 
-Access the dashboard at: `http://localhost:8000`
+---
 
-### Using the Dashboard
+## Project Structure
 
-1. **Overview Statistics**: View overall trip statistics at the top of the page
-2. **Filters**: Use the filter panel to narrow down trip data by:
-   - Date range
-   - Distance (min/max)
-   - Fare amount (min/max)
-   - Hour of day
-   - Weekend/weekday
-3. **Visualizations**: Navigate between different analysis views using tabs:
-   - Hourly Patterns: Trip volume and fares by hour
-   - Borough Analysis: Statistics grouped by NYC borough
-   - Popular Routes: Most frequently traveled pickup-dropoff pairs
-   - Weekend vs Weekday: Comparative analysis
-   - Payment Analysis: Payment type distribution and tipping behavior
-   - Trip Details: Filtered list of individual trips
+```
+Urban_Mobility_Data_Explorer/
+├── backend/
+│   ├── app.py                      # Flask API application
+│   ├── main.py                     # Data processing pipeline
+│   ├── database_handler.py         # SQLite query handler
+│   ├── custom_algorithms.py        # Custom Sort, OutlierDetector, etc.
+│   └── processed/
+│       ├── urban_mobility.db       # SQLite database (created by main.py)
+│       └── taxi_zones_final.json   # GeoJSON export (created by main.py)
+├── frontend/
+│   ├── index.html                  # Main dashboard HTML
+│   ├── styles.css                  # Modern design system CSS
+│   └── app.js                      # Unified controller (all logic)
+├── data/
+│   ├── yellow_tripdata_2019-01.csv # Trip records (download separately)
+│   ├── taxi_zone_lookup.csv        # Zone lookup (download separately)
+│   └── taxi_zones.*                # Shapefile components (download separately)
+└── README.md                       # This file
+```
+
+---
 
 ## API Endpoints
 
-### GET /api/health
-Health check endpoint
+### `GET /api/health`
+Health check
 
 **Response:**
 ```json
-{
-  "status": "healthy",
-  "timestamp": "2024-02-12T10:30:00"
-}
+{"status": "ok"}
 ```
 
-### GET /api/statistics
-Get overall dataset statistics
+### `GET /api/summary`
+Overall dataset statistics
 
 **Response:**
 ```json
 {
   "total_trips": 1000000,
   "avg_distance": 3.45,
-  "avg_duration": 15.2,
   "avg_fare": 18.50,
-  "avg_tip_percentage": 18.5,
-  "earliest_trip": "2024-01-01T00:00:00",
-  "latest_trip": "2024-01-31T23:59:59"
+  "avg_duration": 15.2,
+  "avg_speed": 13.6,
+  "avg_tip_pct": 18.5
 }
 ```
 
-### GET /api/trips
-Get trip records with filtering and pagination
+### `GET /api/trips?limit=50&offset=0&borough=Manhattan&min_fare=10&max_fare=50&hour=18&is_weekend=false`
+Get trips with optional filtering
 
 **Query Parameters:**
-- `limit` (int): Number of records (default: 100, max: 1000)
-- `offset` (int): Pagination offset (default: 0)
-- `min_distance` (float): Minimum trip distance
-- `max_distance` (float): Maximum trip distance
-- `min_fare` (float): Minimum fare amount
-- `max_fare` (float): Maximum fare amount
-- `start_date` (string): Start date (YYYY-MM-DD)
-- `end_date` (string): End date (YYYY-MM-DD)
-- `pickup_zone` (int): Pickup location ID
-- `dropoff_zone` (int): Dropoff location ID
-- `hour` (int): Hour of day (0-23)
-- `day_of_week` (int): Day of week (0-6)
-- `is_weekend` (boolean): Weekend trips only
-
-**Example:**
-```
-GET /api/trips?min_distance=5&max_distance=10&hour=18&limit=50
-```
-
-### GET /api/zones
-Get all taxi zones
+- `limit` (int): records per page (default: 100)
+- `offset` (int): pagination offset (default: 0)
+- `borough` (string): pickup borough filter
+- `min_fare`, `max_fare` (float): fare range
+- `min_distance`, `max_distance` (float): distance range
+- `start_date`, `end_date` (YYYY-MM-DD): date range
+- `hour` (int): 0-23, pickup hour
+- `is_weekend` (true/false): weekend trips only
 
 **Response:**
 ```json
 {
-  "zones": [
+  "trips": [
     {
-      "location_id": 1,
-      "borough": "Manhattan",
-      "zone": "Upper East Side",
-      "service_zone": "Yellow Zone"
+      "id": 1,
+      "tpep_pickup_datetime": "2019-01-01T12:30:00",
+      "trip_distance": 3.5,
+      "fare_amount": 15.50,
+      "pu_zone": "Midtown",
+      "do_zone": "Upper East Side"
     }
   ]
 }
 ```
 
-### GET /api/hourly-analysis
-Get trip statistics grouped by hour of day
+### `GET /api/hourly-patterns`
+Trip patterns by hour of day
 
-**Response:**
-```json
-{
-  "hourly_analysis": [
-    {
-      "hour_of_day": 0,
-      "trip_count": 5000,
-      "avg_distance": 3.2,
-      "avg_duration": 14.5,
-      "avg_fare": 17.80,
-      "avg_tip_percentage": 18.2
-    }
-  ]
-}
-```
+### `GET /api/borough-analysis`
+Statistics grouped by NYC borough
 
-### GET /api/borough-analysis
-Get trip statistics grouped by borough
+### `GET /api/top-routes?limit=20`
+Most popular pickup→dropoff routes
 
-### GET /api/popular-routes
-Get most popular pickup-dropoff route pairs
+### `GET /api/payment-analysis`
+Payment type distribution and tipping
 
-**Query Parameters:**
-- `limit` (int): Number of routes to return (default: 10, max: 100)
+### `GET /api/weekend-comparison`
+Weekend vs weekday comparison
 
-### GET /api/weekend-comparison
-Compare weekend vs weekday trip patterns
+---
 
-### GET /api/payment-analysis
-Analyze payment types and tipping behavior
+## Custom Algorithm: Outlier Detection
 
-### GET /api/data-quality
-Get data quality log statistics
+**File:** `backend/custom_algorithms.py`
 
-## Custom Algorithm Implementation
+**Class:** `OutlierDetector`
 
-### Custom Outlier Detection with QuickSort
+### Algorithm Overview
 
-As required by the assignment, we have implemented a custom outlier detection algorithm without relying on built-in statistical libraries.
+Implements IQR (Interquartile Range) based outlier detection using custom sorting (no built-in stats libraries).
 
-**File:** `backend/data_processor.py`
-
-**Class:** `CustomOutlierDetector`
-
-#### Algorithm Overview
-
-The algorithm implements IQR (Interquartile Range) based outlier detection with a custom QuickSort implementation for sorting numerical data.
-
-#### Implementation Details
-
-**1. QuickSort Algorithm**
-```python
-def quick_sort(self, arr, low, high):
-    """
-    Custom QuickSort implementation
-    
-    Time Complexity: O(n log n) average case
-    Space Complexity: O(log n) due to recursion
-    """
-```
-
-**2. Quartile Calculation**
-```python
-def calculate_quartiles(self, sorted_data):
-    """
-    Manually calculate Q1, Q2 (median), and Q3
-    
-    Time Complexity: O(1) after sorting
-    """
-```
-
-**3. Outlier Detection**
-```python
-def detect_outliers(self, data_series, multiplier=1.5):
-    """
-    Detect outliers using IQR method
-    
-    Returns outlier indices and statistical bounds
-    """
-```
-
-#### Pseudo-code
+### Pseudo-code
 
 ```
-ALGORITHM: IQR-Based Outlier Detection with QuickSort
+ALGORITHM: IQR-Based Outlier Detection
 
-INPUT: data_series (array of numerical values), multiplier (default 1.5)
-OUTPUT: Dictionary containing outlier_indices, bounds, and statistics
+INPUT: data_array (list of numbers), multiplier (default 1.5)
+OUTPUT: outlier_indices, bounds, quartiles
 
-1. Remove null/invalid values from data_series
-2. Create sorted_data = copy of clean_data
-3. CALL quick_sort(sorted_data, 0, length-1)
-   
-   QuickSort Process:
-   a. IF low < high THEN
-      - pivot_index = partition(array, low, high)
-      - quick_sort(array, low, pivot_index-1)
-      - quick_sort(array, pivot_index+1, high)
-   
-4. CALL calculate_quartiles(sorted_data)
-   
-   Quartile Calculation:
-   a. n = length(sorted_data)
-   b. q1_position = n * 0.25
-   c. q2_position = n * 0.50  (median)
-   d. q3_position = n * 0.75
-   e. Interpolate values at these positions
-   f. RETURN (q1, q2, q3)
-
-5. iqr = q3 - q1
-6. lower_bound = q1 - (multiplier * iqr)
-7. upper_bound = q3 + (multiplier * iqr)
-
-8. FOR each value in original data_series:
+1. sorted_data = CustomSort.quick_sort(data_array)
+2. n = length(sorted_data)
+3. q1_idx = floor(n * 0.25)
+4. q3_idx = floor(n * 0.75)
+5. q1 = sorted_data[q1_idx]
+6. q3 = sorted_data[q3_idx]
+7. iqr = q3 - q1
+8. lower_bound = q1 - (multiplier * iqr)
+9. upper_bound = q3 + (multiplier * iqr)
+10. FOR each (i, value) in data_array:
       IF value < lower_bound OR value > upper_bound THEN
-         Add index to outlier_indices
-
-9. RETURN {outlier_indices, bounds, quartiles}
+         outlier_indices.add(i)
+11. RETURN {outlier_indices, bounds, q1, q3, iqr}
 ```
 
-#### Complexity Analysis
+### Complexity Analysis
 
-**Time Complexity:**
-- QuickSort: O(n log n) average case, O(n²) worst case
-- Quartile Calculation: O(1) after sorting
-- Outlier Detection: O(n) for scanning original array
-- **Overall: O(n log n)**
+- **Time:** O(n log n) (dominated by QuickSort)
+- **Space:** O(n) for sorted copy
 
-**Space Complexity:**
-- Sorted array copy: O(n)
-- Recursion stack for QuickSort: O(log n)
-- Outlier indices list: O(k) where k is number of outliers
-- **Overall: O(n)**
-
-#### Usage in Pipeline
-
-The custom algorithm is used in the data cleaning process to detect extreme outliers in trip distance and fare amounts:
+### Usage
 
 ```python
-# Example from data_processor.py
-distance_outliers = self.outlier_detector.detect_outliers(
-    df['trip_distance'].tolist()
-)
-
-print(f"Q1: {distance_outliers['q1']}")
-print(f"Q3: {distance_outliers['q3']}")
-print(f"IQR: {distance_outliers['iqr']}")
-print(f"Outliers found: {len(distance_outliers['outlier_indices'])}")
+detector = OutlierDetector()
+outliers = detector.detect_outliers(trip_distances)
+print(f"Found {len(outliers['outlier_indices'])} outliers")
+print(f"Bounds: [{outliers['lower_bound']}, {outliers['upper_bound']}]")
 ```
 
-This approach allows us to identify anomalous data points while maintaining full control over the statistical calculations, demonstrating algorithmic thinking in a real-world data engineering context.
+---
 
+## Data Quality & Cleaning
 
+**Cleaning steps:**
+1. Load raw CSV trip data
+2. Join with zone lookup (pickup and dropoff)
+3. Normalize timestamps to datetime
+4. Filter out invalid records:
+   - Distance ≤ 0 or > 200 miles
+   - Fare ≤ 0 or > $500
+   - Passenger count ≤ 0 or > 8
+   - Duration ≤ 0 or > 24 hours
+5. Detect outliers using custom IQR algorithm
+6. Calculate derived features
+7. Create SQLite database
 
-## Project Structure
+**Transparency:** Pipeline logs the number of excluded records and reasons.
 
-```
-urban-mobility-explorer/
-├── backend/
-│   ├── app.py                  # Flask API application
-│   ├── data_processor.py       # Data processing and custom algorithm
-│   ├── database.py             # Database operations
-│   ├── load_data.py            # Data loading pipeline
-│   ├── requirements.txt        # Python dependencies
-│   ├── .env.template           # Environment variables template
-│   └── .env                    # Environment variables (not in git)
-├── frontend/
-│   ├── index.html              # Main dashboard page
-│   ├── styles.css              # Stylesheet
-│   └── app.js                  # Frontend application logic
-├── database/
-│   └── schema.sql              # Database schema definition
-├── data/
-│   ├── yellow_tripdata.parquet # Trip records (download separately)
-│   ├── taxi_zone_lookup.csv    # Zone lookup (download separately)
-│   ├── taxi_zones.json         # Zone geometries (download separately)
-│   └── data_quality_log.csv    # Generated quality log
-├── docs/
-│   └── technical_report.pdf    # Technical documentation
-└── README.md                   # This file
-```
+---
 
-## Data Quality and Cleaning
+## Frontend Dashboard Overview
 
-The data cleaning process handles:
+### Components
 
-1. **Missing Values**: Records with missing critical timestamps are excluded
-2. **Duplicates**: Duplicate trip records are removed
-3. **Invalid Passenger Counts**: Trips with <= 0 or > 8 passengers are filtered
-4. **Invalid Distances**: Trips with distance <= 0 or > 200 miles are excluded
-5. **Invalid Fares**: Trips with fare <= 0 or > $500 are removed
-6. **Temporal Inconsistencies**: Trips with duration <= 0 or > 24 hours are excluded
-7. **Outlier Detection**: Extreme outliers in distance and fare are identified using custom IQR algorithm
+1. **Header**
+   - Title and subtitle
+   - Quick stats (total trips, avg fare, etc.)
 
-All exclusions are logged in the `data_quality_log` table with reasons for transparency.
+2. **Filter Panel**
+   - Date range picker
+   - Fare range slider
+   - Distance range slider
+   - Hour of day selector
+   - Weekend/weekday toggle
+   - Apply/Reset buttons
 
-## Derived Features
+3. **Tabs (Visualizations)**
+   - **Hourly Patterns:** Trips and fares by hour
+   - **Borough Analysis:** Stats by NYC borough
+   - **Popular Routes:** Most traveled origin→destination pairs
+   - **Weekend Comparison:** Side-by-side metrics
+   - **Payment Analysis:** Payment type breakdown + tipping
+   - **Trips Table:** Filtered list with pagination
 
-The following features are engineered from raw data:
+4. **Design System**
+   - Modern colors (blue #2563eb accent)
+   - Consistent spacing (8px grid)
+   - Smooth animations (cubic-bezier easing)
+   - Loading skeletons for data
+   - Responsive layout
 
-1. **trip_duration_minutes**: Trip duration calculated from pickup and dropoff timestamps
-2. **average_speed_mph**: Speed calculated as distance divided by time in hours
-3. **tip_percentage**: Tip amount as percentage of base fare
-4. **hour_of_day**: Hour when trip started (0-23)
-5. **day_of_week**: Day of week (0=Monday, 6=Sunday)
-6. **is_weekend**: Boolean flag for weekend trips (Saturday/Sunday)
+---
 
 ## Troubleshooting
 
-### Database Connection Issues
+### API not responding
 ```bash
-# Check if PostgreSQL is running
-sudo service postgresql status
+# Check if Flask is running
+curl http://127.0.0.1:5000/api/health
 
-# Verify database exists
-sudo -u postgres psql -c "\l"
-
-# Check user permissions
-sudo -u postgres psql -c "\du"
+# Check backend logs for errors
+python3 app.py  # should show debug output
 ```
 
-### Port Already in Use
+### Port 5000 already in use
 ```bash
-# If port 5000 is in use, change in app.py:
-app.run(debug=True, host='0.0.0.0', port=5001)
+# Find process using port 5000
+lsof -i :5000
 
-# Update API_BASE_URL in frontend/app.js accordingly
+# Kill it (macOS/Linux)
+kill -9 <PID>
+
+# Or change port in app.py:
+if __name__ == '__main__':
+    app.run(debug=True, port=5001)
 ```
 
-### Data Loading Errors
-- Ensure data files are in correct location specified in .env
-- Verify file formats match expected schemas
-- Check PostgreSQL disk space and memory limits
+### Database file not found
+```bash
+# Ensure main.py ran successfully
+python3 backend/main.py
 
-## License
+# Verify file exists
+ls -la backend/processed/urban_mobility.db
+```
 
-This project is created for educational purposes as part of an academic assignment.
+### Frontend CORS errors
+```bash
+# Ensure API_BASE_URL in app.js matches running Flask server:
+const API_BASE_URL = 'http://127.0.0.1:5000/api';
+```
 
-## Acknowledgments
+### Data not loading
+1. Verify data files are in `data/` folder
+2. Check file paths in `main.py`
+3. Re-run pipeline: `python3 backend/main.py`
+4. Restart API: `python3 app.py`
+5. Refresh frontend
 
-- NYC Taxi & Limousine Commission for providing the dataset
-- Flask and PostgreSQL communities for excellent documentation
-- Chart.js for visualization capabilities
+---
+
+## Summary
+
+This system demonstrates a complete full-stack data engineering pipeline:
+- **Backend:** Python, Flask, SQLite, custom algorithms
+- **Frontend:** HTML/CSS/JavaScript with Chart.js visualizations
+- **Data:** Real-world NYC taxi dataset with cleaning + feature engineering
+- **Architecture:** Clean separation of concerns, efficient queries, modern UI
+
+The custom algorithm implementation (outlier detection with manual sorting) shows algorithmic thinking applied to real data problems, without relying on built-in statistical libraries.
+
+---
+
+**Created:** February 2026  
+**Team 5:** Nkem Jeferson Achia, Muhammed Awwal Achuja
