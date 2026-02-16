@@ -96,13 +96,13 @@ async function initializeApp() {
         populateHourDropdown();
         
         console.log('Loading all data...');
-        // Load all data in parallel
         await Promise.all([
             loadStatistics(),
             loadHourlyAnalysis(),
             loadBoroughAnalysis(),
             loadPopularRoutes(),
-            loadPaymentAnalysis()
+            loadPaymentAnalysis(),
+            loadWeekendComparison()
         ]);
         
         console.log('Data loaded, setting up listeners...');
@@ -326,7 +326,8 @@ async function loadBoroughAnalysis() {
                     data: tripCounts,
                     backgroundColor: ['rgba(102, 126, 234, 0.8)', 'rgba(118, 75, 162, 0.8)', 'rgba(237, 100, 166, 0.8)', 'rgba(255, 154, 158, 0.8)', 'rgba(250, 208, 196, 0.8)'],
                     borderColor: ['#667eea', '#764ba2', '#ed64a6', '#ff9a9e', '#fad0c4'],
-                    borderWidth: 2
+                    borderWidth: 2,
+                    minBarLength: 3
                 }]
             },
             options: {
@@ -444,6 +445,60 @@ async function loadPaymentAnalysis() {
 }
 
 /**
+ * Load and visualize weekend vs weekday comparison
+ */
+async function loadWeekendComparison() {
+    try {
+        const data = await fetchJson(`${API_BASE_URL}/weekend-comparison`);
+        const rows = Array.isArray(data) ? data : data.weekend_comparison || [];
+
+        if (rows.length === 0) return;
+
+        const labels = rows.map(r => r.day_type);
+        const tripCounts = rows.map(r => r.trip_count);
+
+        const ctx = document.getElementById('weekend-chart').getContext('2d');
+        if (charts.weekend) charts.weekend.destroy();
+
+        charts.weekend = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Trip Count',
+                    data: tripCounts,
+                    backgroundColor: ['rgba(102, 126, 234, 0.8)', 'rgba(237, 100, 166, 0.8)'],
+                    borderColor: ['#667eea', '#ed64a6'],
+                    borderWidth: 2
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+        });
+
+        const weekendRow = rows.find(r => r.day_type === 'Weekend');
+        const weekdayRow = rows.find(r => r.day_type === 'Weekday');
+
+        document.getElementById('weekend-comparison').innerHTML = `
+            <div class="comparison-card">
+                <h3>Weekend</h3>
+                <div class="metric"><span class="metric-label">Trips</span><span class="metric-value">${weekendRow?.trip_count?.toLocaleString() || 0}</span></div>
+                <div class="metric"><span class="metric-label">Avg Fare</span><span class="metric-value">$${(weekendRow?.avg_fare ?? 0).toFixed(2)}</span></div>
+                <div class="metric"><span class="metric-label">Avg Distance</span><span class="metric-value">${(weekendRow?.avg_distance ?? 0).toFixed(2)} mi</span></div>
+            </div>
+            <div class="comparison-card">
+                <h3>Weekday</h3>
+                <div class="metric"><span class="metric-label">Trips</span><span class="metric-value">${weekdayRow?.trip_count?.toLocaleString() || 0}</span></div>
+                <div class="metric"><span class="metric-label">Avg Fare</span><span class="metric-value">$${(weekdayRow?.avg_fare ?? 0).toFixed(2)}</span></div>
+                <div class="metric"><span class="metric-label">Avg Distance</span><span class="metric-value">${(weekdayRow?.avg_distance ?? 0).toFixed(2)} mi</span></div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error loading weekend comparison:', error);
+        showError('Failed to load weekend comparison');
+    }
+}
+
+/**
  * Apply filters and load trip data
  */
 async function applyFilters() {
@@ -471,7 +526,8 @@ async function applyFilters() {
         if (weekend) params.append('is_weekend', weekend);
         
         const data = await fetchJson(`${API_BASE_URL}/trips?${params}`);
-        const trips = (Array.isArray(data) ? data : data.trips || []).map(normalizeTripRow);
+        const tripsRaw = Array.isArray(data) ? data : (data?.trips || []);
+        const trips = tripsRaw.map(normalizeTripRow);
         displayTrips(trips);
         updatePageInfo();
         
