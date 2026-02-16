@@ -32,6 +32,17 @@ zones_spatial = gpd.read_file(SPATIAL_DATA)
 df = trips.merge(lookup, left_on='PULocationID', right_on='LocationID', how='left')
 df = df.rename(columns={'Borough': 'pu_borough', 'Zone': 'pu_zone'})
 
+# Add dropoff zone/borough
+lookup_do = lookup.rename(
+    columns={
+        'LocationID': 'DOLocationID',
+        'Borough': 'do_borough',
+        'Zone': 'do_zone',
+        'service_zone': 'do_service_zone'
+    }
+)
+df = df.merge(lookup_do, on='DOLocationID', how='left')
+
 # --- CLEANING ---
 print("Cleaning data...")
 initial_count = len(df)
