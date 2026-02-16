@@ -102,16 +102,28 @@ def get_trips():
         borough = request.args.get('borough', None)
         min_fare = request.args.get('min_fare', None)
         max_fare = request.args.get('max_fare', None)
-        
+        min_distance = request.args.get('min_distance', None)
+        max_distance = request.args.get('max_distance', None)
+        start_date = request.args.get('start_date', None)
+        end_date = request.args.get('end_date', None)
+        hour = request.args.get('hour', None)
+        is_weekend = request.args.get('is_weekend', None)
+
         trips = db_handler.get_trips(
             limit=limit,
             offset=offset,
             borough=borough,
             min_fare=min_fare,
-            max_fare=max_fare
+            max_fare=max_fare,
+            min_distance=min_distance,
+            max_distance=max_distance,
+            start_date=start_date,
+            end_date=end_date,
+            hour=hour,
+            is_weekend=is_weekend
         )
-        
-        return jsonify(trips)
+
+        return jsonify({'trips': trips})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -221,6 +233,16 @@ def get_custom_insights():
             'hourly_aggregation': aggregated,
             'outlier_samples': outliers[:10]
         })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/weekend-comparison', methods=['GET'])
+@login_required
+def get_weekend_comparison():
+    """Get weekend vs weekday comparison"""
+    try:
+        comparison = db_handler.get_weekend_comparison()
+        return jsonify(comparison)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
