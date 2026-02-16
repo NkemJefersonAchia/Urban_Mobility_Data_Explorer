@@ -10,12 +10,8 @@ class DatabaseHandler:
     """Handles all database connections and queries"""
     
     def __init__(self):
-        """Initialize database connection"""
-        self.db_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            'processed',
-            'urban_mobility.db'
-        )
+        base_path = os.path.dirname(os.path.abspath(__file__))
+        self.db_path = os.path.join(base_path, 'processed', 'urban_mobility.db')
     
     def get_connection(self):
         """Create and return database connection"""
@@ -70,11 +66,13 @@ class DatabaseHandler:
         result = self.execute_query(query)
         return result[0] if result else {}
     
-    def get_trips(self, limit=100, offset=0, borough=None, min_fare=None, max_fare=None):
+    def get_trips(self, limit=100, offset=0, borough=None, min_fare=None, max_fare=None,
+                  min_distance=None, max_distance=None, start_date=None, end_date=None,
+                  hour=None, is_weekend=None):
         """Get trips with optional filtering"""
         query = """
         SELECT 
-            id,
+            rowid as id,
             tpep_pickup_datetime,
             tpep_dropoff_datetime,
             passenger_count,
@@ -85,6 +83,8 @@ class DatabaseHandler:
             payment_type,
             pu_borough,
             pu_zone,
+            do_borough,
+            do_zone,
             duration_mins,
             avg_speed_mph,
             tip_percentage,
@@ -94,22 +94,47 @@ class DatabaseHandler:
         WHERE 1=1
         """
         params = []
-        
+
         if borough:
             query += " AND pu_borough = ?"
             params.append(borough)
-        
+
         if min_fare:
             query += " AND fare_amount >= ?"
             params.append(float(min_fare))
-        
+
         if max_fare:
             query += " AND fare_amount <= ?"
             params.append(float(max_fare))
-        
+
+        if min_distance:
+            query += " AND trip_distance >= ?"
+            params.append(float(min_distance))
+
+        if max_distance:
+            query += " AND trip_distance <= ?"
+            params.append(float(max_distance))
+
+        if start_date:
+            query += " AND date(tpep_pickup_datetime) >= date(?)"
+            params.append(start_date)
+
+        if end_date:
+            query += " AND date(tpep_pickup_datetime) <= date(?)"
+            params.append(end_date)
+
+        if hour is not None and hour != '':
+            query += " AND pickup_hour = ?"
+            params.append(int(hour))
+
+        if is_weekend == 'true':
+            query += " AND strftime('%w', tpep_pickup_datetime) IN ('0','6')"
+        elif is_weekend == 'false':
+            query += " AND strftime('%w', tpep_pickup_datetime) NOT IN ('0','6')"
+
         query += " ORDER BY tpep_pickup_datetime DESC LIMIT ? OFFSET ?"
         params.extend([limit, offset])
-        
+
         return self.execute_query(query, tuple(params))
     
     def get_hourly_patterns(self):
@@ -194,13 +219,16 @@ class DatabaseHandler:
         SELECT 
             pu_zone as pickup_zone,
             pu_borough as pickup_borough,
+            do_zone as dropoff_zone,
+            do_borough as dropoff_borough,
             COUNT(*) as trip_count,
             AVG(fare_amount) as avg_fare,
             AVG(trip_distance) as avg_distance,
             AVG(duration_mins) as avg_duration
         FROM trips
         WHERE pu_zone IS NOT NULL AND pu_zone != 'Unknown'
-        GROUP BY pu_zone, pu_borough
+          AND do_zone IS NOT NULL AND do_zone != 'Unknown'
+        GROUP BY pu_zone, pu_borough, do_zone, do_borough
         ORDER BY trip_count DESC
         LIMIT ?
         """
@@ -270,3 +298,22 @@ class DatabaseHandler:
         LIMIT ?
         """
         return self.execute_query(query, (limit,))
+    
+    def get_weekend_comparison(self):
+        """Get weekend vs weekday comparison"""
+        query = """
+        SELECT
+            CASE
+                WHEN strftime('%w', tpep_pickup_datetime) IN ('0','6') THEN 'Weekend'
+                ELSE 'Weekday'
+            END as day_type,
+            COUNT(*) as trip_count,
+            AVG(fare_amount) as avg_fare,
+            AVG(trip_distance) as avg_distance,
+            AVG(duration_mins) as avg_duration,
+            AVG(tip_percentage) as avg_tip_pct
+        FROM trips
+        GROUP BY day_type
+        ORDER BY day_type DESC
+        """
+        return self.execute_query(query)
