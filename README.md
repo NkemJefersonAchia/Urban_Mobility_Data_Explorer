@@ -1,25 +1,21 @@
-# Urban Mobility Data Explorer
+#  Urban Mobility Data Explorer
 
-A full-stack web application for analyzing NYC taxi trip data, featuring advanced data processing, custom algorithms, and interactive visualizations.
+A full-stack data analytics application analyzing **1.5M+ NYC Yellow Taxi trips** with interactive visualizations, custom algorithms, and a responsive web interface.
+
 
 ## Video Walkthrough
+link: https://youtu.be/6GYUgPwvXJg?si=3wh7QCWDbjW1a6ev
+## Team task sheet
+link: https://docs.google.com/spreadsheets/d/1TAso9jGudfoSYq5yYbAykhabNAATC3GYQZLmcN67Ck8/edit?usp=sharing
 
-**Video URL:** [Insert your video link here]
 
-The video walkthrough demonstrates:
 1. System architecture overview
-2. Data processing pipeline execution
+2. Data processing pipeline
 3. Backend API functionality
 4. Frontend dashboard features
-5. Custom algorithm explanation
+5. Custom algorithms explanation
+6. Working features demonstration
 
-## Team Information
-
-**Team Name:** Team 5
-
-**Team Members:**
-- Nkem Jeferson Achia
-- Muhammed Awwal Achuja
 
 ---
 
@@ -294,12 +290,6 @@ open frontend/index.html
 firefox frontend/index.html
 ```
 
-Option B: Serve with a local HTTP server
-```bash
-cd frontend
-python3 -m http.server 5500
-# Then open http://127.0.0.1:5500
-```
 
 **Expected result:** Dashboard loads, filters work, charts display data.
 
@@ -561,6 +551,3 @@ This system demonstrates a complete full-stack data engineering pipeline:
 The custom algorithm implementation (outlier detection with manual sorting) shows algorithmic thinking applied to real data problems, without relying on built-in statistical libraries.
 
 ---
-
-**Created:** February 2026  
-**Team 5:** Nkem Jeferson Achia, Muhammed Awwal Achuja
