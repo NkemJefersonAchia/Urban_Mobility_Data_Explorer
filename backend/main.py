@@ -91,4 +91,4 @@ print("Exporting GeoJSON...")
 zones_spatial.to_file(GEOJSON_OUT, driver='GeoJSON')
 
 conn.close()
-print("\nTASK 1 & 2 COMPLETE!")
+print("\nTASK 1 & 2 COMPLETE")
