@@ -49,7 +49,7 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# ==================== AUTH ROUTES ====================
+# AUTH ROUTES 
 @app.route('/api/login', methods=['POST'])
 def login():
     """Handle user login"""
@@ -81,7 +81,7 @@ def check_auth():
         return jsonify({'authenticated': True, 'username': session['username']})
     return jsonify({'authenticated': False})
 
-# ==================== DATA ROUTES ====================
+# Data routes
 @app.route('/api/summary', methods=['GET'])
 @login_required
 def get_summary():
@@ -246,13 +246,13 @@ def get_weekend_comparison():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# ==================== HEALTH CHECK ====================
+# Health Check
 @app.route('/api/health', methods=['GET'])
 def health_check():
     """Check if API is running"""
     return jsonify({'status': 'healthy', 'service': 'Urban Mobility Explorer API'})
 
-# ==================== ERROR HANDLERS ====================
+# Error Handling
 @app.errorhandler(404)
 def not_found(e):
     return jsonify({'error': 'Route not found'}), 404
