@@ -1,7 +1,7 @@
 """
 Database Handler - SQLite Interface
 Connects to urban_mobility.db
-DO NOT RUN THIS FILE DIRECTLY - It's imported by app.py
+DO NOT RUN THIS FILE DIRECTLY because It's imported by app.py
 """
 import sqlite3
 import os
