@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Urban Mobility Data Explorer</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='styles.css') }}"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <header class="header">
+        <h1>Urban Mobility Data Explorer</h1>
+        <p class="subtitle">NYC Taxi Trip Analysis Dashboard</p>
+      </header>
+
+      <!-- Statistics Overview -->
+      <section class="statistics-grid" id="statistics">
+        <div class="stat-card">
+          <h3>Total Trips</h3>
+          <p class="stat-value" id="total-trips">Loading...</p>
+        </div>
+        <div class="stat-card">
+          <h3>Average Distance</h3>
+          <p class="stat-value" id="avg-distance">Loading...</p>
+        </div>
+        <div class="stat-card">
+          <h3>Average Duration</h3>
+          <p class="stat-value" id="avg-duration">Loading...</p>
+        </div>
+        <div class="stat-card">
+          <h3>Average Fare</h3>
+          <p class="stat-value" id="avg-fare">Loading...</p>
+        </div>
+        <div class="stat-card">
+          <h3>Average Tip</h3>
+          <p class="stat-value" id="avg-tip">Loading...</p>
+        </div>
+        <div class="stat-card">
+          <h3>Date Range</h3>
+          <p class="stat-value small" id="date-range">Loading...</p>
+        </div>
+      </section>
+
+      <!-- Filter Controls -->
+      <section class="filters">
+        <h2>Filter Trip Data</h2>
+        <div class="filter-grid">
+          <div class="filter-group">
+            <label for="filter-start-date">Start Date</label>
+            <input type="date" id="filter-start-date" />
+          </div>
+          <div class="filter-group">
+            <label for="filter-end-date">End Date</label>
+            <input type="date" id="filter-end-date" />
+          </div>
+          <div class="filter-group">
+            <label for="filter-min-distance">Min Distance (miles)</label>
+            <input
+              type="number"
+              id="filter-min-distance"
+              step="0.1"
+              placeholder="0.0"
+            />
+          </div>
+          <div class="filter-group">
+            <label for="filter-max-distance">Max Distance (miles)</label>
+            <input
+              type="number"
+              id="filter-max-distance"
+              step="0.1"
+              placeholder="100.0"
+            />
+          </div>
+          <div class="filter-group">
+            <label for="filter-min-fare">Min Fare ($)</label>
+            <input
+              type="number"
+              id="filter-min-fare"
+              step="0.1"
+              placeholder="0.0"
+            />
+          </div>
+          <div class="filter-group">
+            <label for="filter-max-fare">Max Fare ($)</label>
+            <input
+              type="number"
+              id="filter-max-fare"
+              step="0.1"
+              placeholder="500.0"
+            />
+          </div>
+          <div class="filter-group">
+            <label for="filter-hour">Hour of Day</label>
+            <select id="filter-hour">
+              <option value="">All Hours</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="filter-weekend">Weekend Only</label>
+            <select id="filter-weekend">
+              <option value="">All Days</option>
+              <option value="true">Weekend</option>
+              <option value="false">Weekday</option>
+            </select>
+          </div>
+        </div>
+        <div class="filter-actions">
+          <button id="apply-filters" class="btn btn-primary">
+            Apply Filters
+          </button>
+          <button id="clear-filters" class="btn btn-secondary">
+            Clear Filters
+          </button>
+        </div>
+      </section>
+
+      <!-- Visualization Tabs -->
+      <section class="tabs">
+        <div class="tab-buttons">
+          <button class="tab-button active" data-tab="hourly">
+            Hourly Patterns
+          </button>
+          <button class="tab-button" data-tab="borough">
+            Borough Analysis
+          </button>
+          <button class="tab-button" data-tab="routes">Popular Routes</button>
+          <button class="tab-button" data-tab="weekend">
+            Weekend vs Weekday
+          </button>
+          <button class="tab-button" data-tab="payment">
+            Payment Analysis
+          </button>
+          <button class="tab-button" data-tab="trips">Trip Details</button>
+        </div>
+
+        <!-- Tab Content -->
+        <div id="hourly" class="tab-content active">
+          <h2>Trip Patterns by Hour of Day</h2>
+          <div class="chart-container">
+            <canvas id="hourly-chart"></canvas>
+          </div>
+          <div class="insights">
+            <h3>Key Insights</h3>
+            <div id="hourly-insights">Loading insights...</div>
+          </div>
+        </div>
+
+        <div id="borough" class="tab-content">
+          <h2>Trip Analysis by Borough</h2>
+          <div class="chart-container">
+            <canvas id="borough-chart"></canvas>
+          </div>
+          <div class="insights">
+            <h3>Key Insights</h3>
+            <div id="borough-insights">Loading insights...</div>
+          </div>
+        </div>
+
+        <div id="routes" class="tab-content">
+          <h2>Most Popular Routes</h2>
+          <div class="table-container">
+            <table id="routes-table">
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Pickup Location</th>
+                  <th>Dropoff Location</th>
+                  <th>Trip Count</th>
+                  <th>Avg Distance</th>
+                  <th>Avg Fare</th>
+                </tr>
+              </thead>
+              <tbody id="routes-tbody">
+                <tr>
+                  <td colspan="6">Loading...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="weekend" class="tab-content">
+          <h2>Weekend vs Weekday Comparison</h2>
+          <div class="chart-container">
+            <canvas id="weekend-chart"></canvas>
+          </div>
+          <div class="comparison-grid" id="weekend-comparison">
+            Loading comparison...
+          </div>
+        </div>
+
+        <div id="payment" class="tab-content">
+          <h2>Payment Type Analysis</h2>
+          <div class="chart-container">
+            <canvas id="payment-chart"></canvas>
+          </div>
+          <div class="insights">
+            <h3>Payment Insights</h3>
+            <div id="payment-insights">Loading insights...</div>
+          </div>
+        </div>
+
+        <div id="trips" class="tab-content">
+          <h2>Individual Trip Records</h2>
+          <div class="table-container">
+            <table id="trips-table">
+              <thead>
+                <tr>
+                  <th>Pickup Time</th>
+                  <th>Pickup Location</th>
+                  <th>Dropoff Location</th>
+                  <th>Distance</th>
+                  <th>Duration</th>
+                  <th>Fare</th>
+                  <th>Tip %</th>
+                </tr>
+              </thead>
+              <tbody id="trips-tbody">
+                <tr>
+                  <td colspan="7">Apply filters to view trips</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination">
+            <button id="prev-page" class="btn btn-secondary">Previous</button>
+            <span id="page-info">Page 1</span>
+            <button id="next-page" class="btn btn-secondary">Next</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="footer">
+        <p>Urban Mobility Data Explorer</p>
+        <p>Data processed and analyzed using custom algorithms and SQLite</p>
+      </footer>
+    </div>
+
+    <!-- App JS -->
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </body>
+</html>
