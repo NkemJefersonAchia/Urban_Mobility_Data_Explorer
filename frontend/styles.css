@@ -436,43 +436,201 @@ tbody tr:hover {
     margin: 20px 0;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    .header h1 {
-        font-size: 1.8em;
-    }
-    
-    .statistics-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .filter-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .tab-buttons {
-        flex-direction: column;
-    }
-    
-    .tab-button {
-        min-width: auto;
-    }
-    
+/* Comprehensive Mobile Responsive Updates */
+@media (max-width: 1024px) {
     .chart-container {
-        height: 300px;
+        height: 350px;
     }
 }
 
-@media (max-width: 480px) {
-    .statistics-grid {
-        grid-template-columns: 1fr;
-    }
-    
+@media (max-width: 768px) {
     .container {
         padding: 10px;
     }
     
     .header {
-        padding: 20px 15px;
+        padding: 25px 15px;
+        margin-bottom: 20px;
+    }
+    
+    .header h1 {
+        font-size: 1.8em;
+        letter-spacing: 1px;
+    }
+    
+    .subtitle {
+        font-size: 1em;
+    }
+    
+    .statistics-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    
+    .stat-card {
+        padding: 15px;
+    }
+    
+    .stat-value {
+        font-size: 1.5em;
+    }
+    
+    .filters {
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .filters h2 {
+        font-size: 1em;
+        margin-bottom: 15px;
+    }
+    
+    .filter-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    
+    .filter-group label {
+        font-size: 0.8em;
+    }
+    
+    .filter-group input,
+    .filter-group select {
+        padding: 8px;
+    }
+    
+    .filter-actions {
+        gap: 10px;
+    }
+    
+    .btn {
+        padding: 9px 18px;
+        font-size: 0.9em;
+    }
+    
+    .tab-buttons {
+        gap: 5px;
+    }
+    
+    .tab-button {
+        padding: 10px 12px;
+        font-size: 0.8em;
+    }
+    
+    .chart-container {
+        height: 300px;
+        margin-bottom: 20px;
+    }
+    
+    table {
+        font-size: 0.9em;
+    }
+    
+    th {
+        padding: 10px 8px;
+        font-size: 0.75em;
+    }
+    
+    td {
+        padding: 8px;
+        font-size: 0.85em;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 8px;
+    }
+    
+    .header {
+        padding: 15px 10px;
+        margin-bottom: 15px;
+    }
+    
+    .header h1 {
+        font-size: 1.5em;
+        margin-bottom: 5px;
+        letter-spacing: 0px;
+    }
+    
+    .subtitle {
+        font-size: 0.9em;
+    }
+    
+    .statistics-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .stat-card {
+        padding: 12px;
+    }
+    
+    .stat-card h3 {
+        font-size: 0.7em;
+        margin-bottom: 6px;
+    }
+    
+    .stat-value {
+        font-size: 1.3em;
+    }
+    
+    .filters {
+        padding: 12px;
+        margin-bottom: 15px;
+    }
+    
+    .filter-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .filter-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .filter-actions button {
+        width: 100%;
+    }
+    
+    .btn {
+        padding: 10px 15px;
+        font-size: 0.85em;
+    }
+    
+    .tab-buttons {
+        gap: 4px;
+    }
+    
+    .tab-button {
+        padding: 8px 10px;
+        font-size: 0.75em;
+    }
+    
+    .chart-container {
+        height: 250px;
+        margin-bottom: 15px;
+        padding: 5px;
+    }
+    
+    th {
+        padding: 8px 5px;
+        font-size: 0.7em;
+    }
+    
+    td {
+        padding: 6px 5px;
+        font-size: 0.8em;
+    }
+    
+    .pagination {
+        gap: 8px;
+        margin-top: 15px;
+    }
+    
+    #page-info {
+        padding: 8px 10px;
+        font-size: 0.9em;
     }
 }
