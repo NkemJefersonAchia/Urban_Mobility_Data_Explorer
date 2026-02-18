@@ -5,7 +5,7 @@
 
 // Configuration
 const API_BASE_URL = 'http://127.0.0.1:5000/api';
-const RECORDS_PER_PAGE = 50;
+const RECORDS_PER_PAGE = 100;  // Increased from 50 to show more data
 
 // Session auth credentials
 const API_USERNAME = 'admin';
@@ -14,6 +14,7 @@ const API_PASSWORD = 'admin123';
 // State management
 let currentPage = 1;
 let charts = {};
+let totalResults = 0;  // Track total results for better pagination
 
 /**
  * Login to the application
@@ -317,6 +318,7 @@ async function loadBoroughAnalysis() {
         const ctx = document.getElementById('borough-chart').getContext('2d');
         if (charts.borough) charts.borough.destroy();
         
+        // Use horizontal bar chart for better mobile display
         charts.borough = new Chart(ctx, {
             type: 'bar',
             data: {
@@ -327,14 +329,21 @@ async function loadBoroughAnalysis() {
                     backgroundColor: ['rgba(102, 126, 234, 0.8)', 'rgba(118, 75, 162, 0.8)', 'rgba(237, 100, 166, 0.8)', 'rgba(255, 154, 158, 0.8)', 'rgba(250, 208, 196, 0.8)'],
                     borderColor: ['#667eea', '#764ba2', '#ed64a6', '#ff9a9e', '#fad0c4'],
                     borderWidth: 2,
-                    minBarLength: 3
+                    barPercentage: 0.7,
+                    minBarLength: 5
                 }]
             },
             options: {
+                indexAxis: 'y',  // Horizontal bars
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true } }
+                plugins: { 
+                    legend: { display: true, position: 'top' },
+                    tooltips: { enabled: true }
+                },
+                scales: { 
+                    x: { beginAtZero: true, ticks: { callback: value => value.toLocaleString() } }
+                }
             }
         });
         
@@ -410,18 +419,32 @@ async function loadPaymentAnalysis() {
         const ctx = document.getElementById('payment-chart').getContext('2d');
         if (charts.payment) charts.payment.destroy();
         
+        // Use bar chart instead of doughnut to show all payment types clearly
         charts.payment = new Chart(ctx, {
-            type: 'doughnut',
+            type: 'bar',
             data: {
                 labels: labels,
                 datasets: [{
+                    label: 'Number of Trips',
                     data: tripCounts,
                     backgroundColor: ['rgba(102, 126, 234, 0.8)', 'rgba(118, 75, 162, 0.8)', 'rgba(237, 100, 166, 0.8)', 'rgba(255, 154, 158, 0.8)', 'rgba(250, 208, 196, 0.8)', 'rgba(179, 229, 252, 0.8)'],
-                    borderColor: '#fff',
-                    borderWidth: 2
+                    borderColor: ['#667eea', '#764ba2', '#ed64a6', '#ff9a9e', '#fad0c4', '#b3e5fc'],
+                    borderWidth: 2,
+                    barPercentage: 0.8
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+            options: { 
+                indexAxis: 'y',  // Horizontal bars to show labels clearly
+                responsive: true, 
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { display: true, position: 'top' },
+                    tooltip: { enabled: true, callbacks: { label: ctx => ctx.parsed.x.toLocaleString() } }
+                },
+                scales: { 
+                    x: { beginAtZero: true, ticks: { callback: value => value.toLocaleString() } }
+                }
+            }
         });
         
         const topPayment = paymentData[0];
@@ -432,8 +455,8 @@ async function loadPaymentAnalysis() {
             <ul>
                 <li>${paymentTypes[topPayment.payment_type]} most common (${topPercentage}% of trips)</li>
                 <li>Credit cards show higher tip rates vs cash</li>
-                <li>Average fare: $${topPayment.avg_fare} (${paymentTypes[topPayment.payment_type]})</li>
-                <li>Digital payments increasingly dominant</li>
+                <li>Average fare: $${topPayment.avg_fare?.toFixed(2) || '0.00'} (${paymentTypes[topPayment.payment_type]})</li>
+                <li>Digital payments increasingly dominant in NYC taxi market</li>
             </ul>
         `;
         
@@ -507,23 +530,26 @@ async function applyFilters() {
         params.append('limit', RECORDS_PER_PAGE);
         params.append('offset', (currentPage - 1) * RECORDS_PER_PAGE);
         
-        const startDate = document.getElementById('filter-start-date').value;
-        const endDate = document.getElementById('filter-end-date').value;
-        const minDistance = document.getElementById('filter-min-distance').value;
-        const maxDistance = document.getElementById('filter-max-distance').value;
-        const minFare = document.getElementById('filter-min-fare').value;
-        const maxFare = document.getElementById('filter-max-fare').value;
-        const hour = document.getElementById('filter-hour').value;
-        const weekend = document.getElementById('filter-weekend').value;
+        const startDate = document.getElementById('filter-start-date').value?.trim();
+        const endDate = document.getElementById('filter-end-date').value?.trim();
+        const minDistance = document.getElementById('filter-min-distance').value?.trim();
+        const maxDistance = document.getElementById('filter-max-distance').value?.trim();
+        const minFare = document.getElementById('filter-min-fare').value?.trim();
+        const maxFare = document.getElementById('filter-max-fare').value?.trim();
+        const hour = document.getElementById('filter-hour').value?.trim();
+        const weekend = document.getElementById('filter-weekend').value?.trim();
         
-        if (startDate) params.append('start_date', startDate);
-        if (endDate) params.append('end_date', endDate);
-        if (minDistance) params.append('min_distance', minDistance);
-        if (maxDistance) params.append('max_distance', maxDistance);
-        if (minFare) params.append('min_fare', minFare);
-        if (maxFare) params.append('max_fare', maxFare);
-        if (hour) params.append('hour', hour);
-        if (weekend) params.append('is_weekend', weekend);
+        // Only add parameters if they have actual values
+        if (startDate && startDate !== '') params.append('start_date', startDate);
+        if (endDate && endDate !== '') params.append('end_date', endDate);
+        if (minDistance && minDistance !== '' && minDistance !== '0') params.append('min_distance', parseFloat(minDistance).toFixed(2));
+        if (maxDistance && maxDistance !== '' && maxDistance !== '0') params.append('max_distance', parseFloat(maxDistance).toFixed(2));
+        if (minFare && minFare !== '' && minFare !== '0') params.append('min_fare', parseFloat(minFare).toFixed(2));
+        if (maxFare && maxFare !== '' && maxFare !== '0') params.append('max_fare', parseFloat(maxFare).toFixed(2));
+        if (hour !== '' && hour !== undefined && hour !== null) params.append('hour', parseInt(hour));
+        if (weekend !== '' && weekend !== undefined && weekend !== null) params.append('is_weekend', weekend);
+        
+        console.log('Applying filters:', params.toString());
         
         const data = await fetchJson(`${API_BASE_URL}/trips?${params}`);
         const tripsRaw = Array.isArray(data) ? data : (data?.trips || []);
@@ -531,10 +557,10 @@ async function applyFilters() {
         displayTrips(trips);
         updatePageInfo();
         
-        console.log(`Loaded ${trips.length} trips`);
+        console.log(`Loaded ${trips.length} trips with filters applied`);
     } catch (error) {
         console.error('Error applying filters:', error);
-        showError('Failed to load trips');
+        showError('Failed to load trips: ' + error.message);
     }
 }
 
@@ -569,10 +595,20 @@ function displayTrips(trips) {
  * Clear all filters
  */
 function clearFilters() {
-    document.querySelectorAll('[id^="filter-"]').forEach(el => el.value = '');
+    // Clear all filter inputs
+    document.getElementById('filter-start-date').value = '';
+    document.getElementById('filter-end-date').value = '';
+    document.getElementById('filter-min-distance').value = '';
+    document.getElementById('filter-max-distance').value = '';
+    document.getElementById('filter-min-fare').value = '';
+    document.getElementById('filter-max-fare').value = '';
+    document.getElementById('filter-hour').value = '';
+    document.getElementById('filter-weekend').value = '';
+    
     currentPage = 1;
     document.getElementById('trips-tbody').innerHTML = '<tr><td colspan="7">Apply filters to view trips</td></tr>';
     updatePageInfo();
+    console.log('All filters cleared');
 }
 
 /**
