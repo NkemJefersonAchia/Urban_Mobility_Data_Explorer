@@ -1,6 +1,5 @@
 """
-Custom Algorithms - Manual implementations without built-in libraries
-Demonstrates algorithmic thinking for data processing
+Custom Algorithms 
 """
 
 class CustomSort:
@@ -294,7 +293,7 @@ class SpeedAnalyzer:
         1. Filter hours with sufficient data (trip_count > threshold)
         2. Find minimum average speed
         3. Identify all hours within 10% of minimum
-        4. Return congestion hours
+        4. Return the congestion hours
         
         Time Complexity: O(n)
         """
