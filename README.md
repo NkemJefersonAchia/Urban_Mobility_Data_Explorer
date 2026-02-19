@@ -2,12 +2,15 @@
 
 A full-stack data analytics application analyzing **1.5M+ NYC Yellow Taxi trips** with interactive visualizations, custom algorithms, and a responsive web interface.
 
-
 ## Video Walkthrough
 link: https://youtu.be/6GYUgPwvXJg?si=3wh7QCWDbjW1a6ev
+
 ## Team task sheet
 link: https://docs.google.com/spreadsheets/d/1TAso9jGudfoSYq5yYbAykhabNAATC3GYQZLmcN67Ck8/edit?usp=sharing
 
+---
+
+## Quick Start
 
 1. System architecture overview
 2. Data processing pipeline
@@ -16,6 +19,230 @@ link: https://docs.google.com/spreadsheets/d/1TAso9jGudfoSYq5yYbAykhabNAATC3GYQZ
 5. Custom algorithms explanation
 6. Working features demonstration
 
+---
+
+## Environment Setup (REQUIRED - Do This First!)
+
+Before running the application, you **must** create a Python virtual environment and install dependencies.
+
+### Prerequisites
+- Python 3.10+ installed ([Download here](https://www.python.org/downloads/))
+- Git (for cloning the repository)
+
+### Step 1: Create Virtual Environment
+
+Navigate to the project folder, then:
+
+**macOS/Linux:**
+```bash
+cd Urban_Mobility_Data_Explorer
+python3 -m venv venv
+source venv/bin/activate
+```
+
+**Windows (Command Prompt):**
+```bash
+cd Urban_Mobility_Data_Explorer
+python -m venv venv
+venv\Scripts\activate
+```
+
+**Windows (PowerShell):**
+```powershell
+cd Urban_Mobility_Data_Explorer
+python -m venv venv
+venv\Scripts\Activate.ps1
+```
+
+You should see `(venv)` at the start of your terminal prompt, indicating the virtual environment is active.
+
+### Step 2: Install Dependencies
+
+With the virtual environment activated, run:
+
+**macOS/Linux:**
+```bash
+python3 -m pip install --upgrade pip
+python3 -m pip install flask flask-cors pandas geopandas shapely
+```
+
+**Windows (Command Prompt):**
+```bash
+python -m pip install --upgrade pip
+python -m pip install flask flask-cors pandas geopandas shapely
+```
+
+**Windows (PowerShell):**
+```powershell
+python -m pip install --upgrade pip
+python -m pip install flask flask-cors pandas geopandas shapely
+```
+
+### What Each Package Does
+
+- **flask**: Web framework for building the REST API
+- **flask-cors**: Enables cross-origin requests (allows frontend to talk to backend)
+- **pandas**: Data manipulation and analysis
+- **geopandas**: Geospatial data handling
+- **shapely**: Geometric operations for spatial data
+
+### Step 3: Verify Installation
+
+Confirm all packages are installed:
+
+```bash
+python3 -c "import flask, flask_cors, pandas, geopandas; print('✓ All dependencies installed successfully!')"
+```
+
+### Troubleshooting Virtual Environment
+
+**"command not found: python3"** (macOS)
+- Ensure Python 3 is installed: `brew install python3@3.11`
+- Use `python3` instead of `python`
+
+**"venv: command not found"**
+- Ensure Python 3 is properly installed
+- On macOS: `brew install python3`
+- On Windows: Download from [python.org](https://www.python.org/downloads/)
+
+**To deactivate the virtual environment:**
+```bash
+deactivate
+```
+
+**To reactivate next time:**
+```bash
+# macOS/Linux
+source venv/bin/activate
+
+# Windows (Command Prompt)
+venv\Scripts\activate
+
+# Windows (PowerShell)
+venv\Scripts\Activate.ps1
+```
+
+---
+
+## Step-by-Step: Run the Application
+
+Now that your environment is set up, follow these steps to run the app.
+
+### Prerequisites for Running
+- ✓ Virtual environment created and activated (see above)
+- Data files in `data/` folder:
+  - `yellow_tripdata_2019-01.csv`
+  - `taxi_zone_lookup.csv`
+  - `taxi_zones.shp` (and related shapefile files: .shx, .dbf, .prj)
+
+### Step 1: Build the Database
+
+The database schema is **automatically generated** by running the data processing pipeline:
+
+```bash
+cd backend
+python3 main.py
+```
+
+**What this does:**
+- Loads raw CSV data from `data/` folder
+- Cleans, validates, and engineers features
+- **Creates SQLite database schema** at: `backend/processed/urban_mobility.db`
+- Saves rejected/invalid records to: `backend/rejected_data/invalid_dates.csv`
+- Exports GeoJSON to: `backend/processed/taxi_zones_final.json`
+
+**Expected Output:**
+```
+Starting Urban Mobility Data Pipeline...
+Cleaning data...
+   - Validating dates: Accepting years <= 2019, rejecting 2020+...
+   - Found X records from year 2020 onwards
+   - Invalid records saved to: backend/rejected_data/invalid_dates.csv
+   - Cleaned Y records total.
+Engineering features...
+Saving to Database: backend/processed/urban_mobility.db...
+Exporting GeoJSON...
+
+TASK 1 & 2 COMPLETE!
+```
+
+**Verify the database was created:**
+```bash
+ls -la backend/processed/urban_mobility.db
+```
+
+### Step 2: Start the Backend API
+
+In the same `backend` directory (virtual environment still active):
+
+```bash
+python3 app.py
+```
+
+**Expected Output:**
+```
+======================================================================
+URBAN MOBILITY EXPLORER API (SQLite)
+======================================================================
+Database: urban_mobility.db
+API URL: http://127.0.0.1:5000
+Login: admin/admin123 or user/user123
+======================================================================
+ * Running on http://127.0.0.1:5000
+ * Debug mode: on
+```
+
+✅ **Backend is running at:** `http://127.0.0.1:5000`
+
+**Login credentials:**
+- Username: `admin` / Password: `admin123`
+- Username: `user` / Password: `user123`
+
+**Keep this terminal open** — it's serving your API requests.
+
+### Step 3: Launch the Frontend
+
+Open a **new terminal window** in the same project folder:
+
+**macOS/Linux:**
+```bash
+# Make sure you're still in the project root
+cd Urban_Mobility_Data_Explorer
+source venv/bin/activate
+cd frontend
+python3 -m http.server 5500
+```
+
+**Windows (Command Prompt):**
+```bash
+cd Urban_Mobility_Data_Explorer
+venv\Scripts\activate
+cd frontend
+python -m http.server 5500
+```
+
+**Expected Output:**
+```
+Serving HTTP on 127.0.0.1 port 5500 (http://127.0.0.1:5500/)
+```
+
+✅ **Frontend is running at:** `http://127.0.0.1:5500/index.html`
+
+### Step 4: Access the Dashboard
+
+Open your web browser and go to:
+
+```
+http://127.0.0.1:5500/index.html
+```
+
+**Expected result:**
+- Dashboard loads with login screen
+- Login with provided credentials
+- Filters work and charts display data
+- All tabs (Hourly Patterns, Borough Analysis, Routes, etc.) are functional
+
+**Keep this terminal open** — it's serving the frontend files.
 
 ---
 
@@ -88,19 +315,19 @@ The application processes the NYC Taxi & Limousine Commission dataset, including
 ```
                   ┌──────────────────────────────────────────┐
                   │              Raw NYC Taxi Data           │
-                  │             (Folder: raw_data/)          │
+                  │             (Folder: data/)              │
                   │  - yellow_tripdata_2019-01.csv           │
                   │  - taxi_zone_lookup.csv                  │
                   │  - taxi_zones.shp,* (shp, dbf, prj, etc.)│
                   └────────────────────┬─────────────────────┘
                                        │
-                                       │ User places in /raw_data/
+                                       │ User places in /data/
                                        ▼
 ┌───────────────────────────────────────────────────────────────────────────────┐
 │                                                                               │
 │   ┌─────────────────────────────┐                  ┌──────────────────────┐   │
 │   │       Data Processing       │                  │                      │   │
-│   │      (process_data.py)      ├─────────────────►│    (rejected_data/)  │   │
+│   │       (main.py)             ├─────────────────►│    (rejected_data/)  │   │
 │   │  - Pandas cleaning          │    Rejected      │ - All the rejected   │   │
 │   │  - Feature engineering      │                  │   data are sent here │   │
 │   │  - Outlier rejection        │                  └──────────────────────┘   │
@@ -112,8 +339,8 @@ The application processes the NYC Taxi & Limousine Commission dataset, including
 │   ┌─────────────────────────────┐                                             │
 │   │       SQLite Database       │                                             │
 │   │  (processed/                │                                             │
-│   │      urban_mobility.db)     |                                             |
-|   │      taxi_zones_final.json  |                                             │  
+│   │      urban_mobility.db)     │                                             │
+│   │      taxi_zones_final.json  │                                             │
 │   └──────────────┬──────────────┘                                             │
 │                  │                                                            │
 │                  │ Queries                                                    │
@@ -135,9 +362,9 @@ The application processes the NYC Taxi & Limousine Commission dataset, including
          │           Frontend           │
          │                              │
          │      Frontend Dashboard      │
-         │  - templates/index.html      │
-         │  - static/app.js (fetch API) │
-         │  - static/styles.css         │
+         │  - index.html                │
+         │  - app.js (fetch API)        │
+         │  - styles.css                │
          │  - Charts + Interactive Map  │
          └──────────────────────────────┘
 ```
@@ -382,138 +609,11 @@ NOT `localhost` or port 5500.
 
 ---
 
-## Step-by-Step: Run the Application
-
-### Prerequisites
-- Python 3.10+ installed
-- Data files in `data/` folder:
-  - `yellow_tripdata_2019-01.csv`
-  - `taxi_zone_lookup.csv`
-  - `taxi_zones.shp` (and related shapefile files: .shx, .dbf, .prj)
-
-### Check Dependencies First
-
-Before running the application, verify all required packages are installed:
-
-```bash
-chmod +x quick_start.sh
-./quick_start.sh
-```
-
-This checks for:
-- Python 3
-- flask
-- flask-cors
-- pandas
-- geopandas
-- shapely
-
-If any dependencies are missing, install them:
-
-```bash
-pip install flask flask-cors pandas geopandas shapely
-```
-
----
-
-### Step 1: Build the Database
-
-The database schema is **automatically generated** by running the data processing pipeline located in `backend/main.py`:
-
-```bash
-cd backend
-python3 main.py
-```
-
-**What this does:**
-- Loads raw CSV data from `data/` folder
-- Cleans, validates, and engineers features
-- **Creates SQLite database schema** at: `backend/processed/urban_mobility.db`
-- Saves rejected/invalid records to: `backend/rejected_data/invalid_dates.csv`
-- Exports GeoJSON to: `backend/processed/taxi_zones_final.json`
-
-**Output:**
-```
-Starting Urban Mobility Data Pipeline...
-Cleaning data...
-   - Validating dates: Accepting years <= 2019, rejecting 2020+...
-   - Found X records from year 2020 onwards
-   - Invalid records saved to: backend/rejected_data/invalid_dates.csv
-   - Cleaned Y records total.
-Engineering features...
-Saving to Database: backend/processed/urban_mobility.db...
-Exporting GeoJSON...
-
-TASK 1 & 2 COMPLETE!
-```
-
-**Database Schema Location:**
-The complete database schema is stored in: `backend/processed/urban_mobility.db`
-
-This creates two tables:
-- `trips` (Fact table): Contains cleaned trip records with engineered features
-- `zones` (Dimension table): Contains taxi zone lookup data
-
-To inspect the schema manually:
-```bash
-sqlite3 backend/processed/urban_mobility.db ".schema trips"
-sqlite3 backend/processed/urban_mobility.db ".schema zones"
-```
-
-### Step 2: Start the Backend API
-
-```bash
-cd backend
-python3 app.py
-```
-
-**Output:**
-```
-======================================================================
-URBAN MOBILITY EXPLORER API (SQLite)
-======================================================================
-Database: urban_mobility.db
-API URL: http://127.0.0.1:5000
-Login: admin/admin123 or user/user123
-======================================================================
- * Running on http://127.0.0.1:5000
- * Debug mode: on
-```
-
-API is now running at: `http://127.0.0.1:5000`
-
-**Login credentials:**
-- Username: `admin` / Password: `admin123`
-- Username: `user` / Password: `user123`
-
-Keep this terminal open.
-
-#### Step 3: Launch the Frontend
-
-Open a **new terminal**:
-
-```bash
-cd frontend
-python3 -m http.server 5500
-```
-
-**Output:**
-```
-Serving HTTP on 127.0.0.1 port 5500 (http://127.0.0.1:5500/)
-```
-
-Frontend opens at: `http://127.0.0.1:5500/index.html`
-
-**Expected result:** Dashboard loads, you can login, filters work, and charts display data.
-
-Keep this terminal open.
-
----
-
 ## Project Structure
 
 ```
 Urban_Mobility_Data_Explorer/
+├── venv/                           # Virtual environment (created locally)
 ├── backend/
 │   ├── app.py                      # Flask API application
 │   ├── main.py                     # Data processing pipeline
@@ -535,7 +635,6 @@ Urban_Mobility_Data_Explorer/
 │   ├── yellow_tripdata_2019-01.csv # Trip records (download separately)
 │   ├── taxi_zone_lookup.csv        # Zone lookup (download separately)
 │   └── taxi_zones.*                # Shapefile components (download separately)
-├── quick_start.sh                  # Dependency checker script
 └── README.md                       # This file
 ```
 
@@ -715,7 +814,25 @@ print(f"Bounds: [{outliers['lower_bound']}, {outliers['upper_bound']}]")
 
 ## Troubleshooting
 
-### API not responding
+### Virtual Environment Issues
+
+**"command not found: python3" or "No module named pip"** (macOS)
+- Ensure Python 3 is installed: `brew install python3`
+- Verify: `python3 --version`
+
+**"venv: command not found"**
+- Python 3 is not installed or not in PATH
+- macOS: `brew install python3`
+- Windows: Download from [python.org](https://www.python.org/downloads/)
+
+**Virtual environment activation fails**
+- Ensure you're in the correct directory: `cd Urban_Mobility_Data_Explorer`
+- Try creating it again: `python3 -m venv venv`
+- Check permissions: `ls -la venv/`
+
+### API Issues
+
+**API not responding**
 ```bash
 # Check if Flask is running
 curl http://127.0.0.1:5000/api/health
@@ -724,7 +841,7 @@ curl http://127.0.0.1:5000/api/health
 python3 app.py  # should show debug output
 ```
 
-### Port 5000 already in use
+**Port 5000 already in use**
 ```bash
 # Find process using port 5000
 lsof -i :5000
@@ -737,7 +854,9 @@ if __name__ == '__main__':
     app.run(debug=True, port=5001)
 ```
 
-### Database file not found
+### Database Issues
+
+**Database file not found**
 ```bash
 # Ensure main.py ran successfully
 python3 backend/main.py
@@ -746,18 +865,20 @@ python3 backend/main.py
 ls -la backend/processed/urban_mobility.db
 ```
 
-### Frontend CORS errors
+### Frontend Issues
+
+**Frontend CORS errors**
 ```bash
 # Ensure API_BASE_URL in app.js matches running Flask server:
 const API_BASE_URL = 'http://127.0.0.1:5000/api';
 ```
 
-### Data not loading
+**Data not loading**
 1. Verify data files are in `data/` folder
 2. Check file paths in `main.py`
 3. Re-run pipeline: `python3 backend/main.py`
 4. Restart API: `python3 app.py`
-5. Refresh frontend
+5. Refresh frontend (Cmd+Shift+R on macOS, Ctrl+Shift+R on Windows)
 
 ---
 
