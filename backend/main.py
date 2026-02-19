@@ -109,7 +109,7 @@ df['duration_mins'] = (df['tpep_dropoff_datetime'] - df['tpep_pickup_datetime'])
 # Ensure duration is valid for speed calculation
 df = df[df['duration_mins'] > 0]
 df['avg_speed_mph'] = df['trip_distance'] / (df['duration_mins'] / 60)
-df['tip_percentage'] = (df['tip_amount'] / df['fare_amount']) * 100
+df['tip_percentage'] = (df['tip_amount'] / df['fare_amount']).fillna(0) * 100
 
 # Add columns expected by database_handler.py
 df['pickup_hour'] = df['tpep_pickup_datetime'].dt.hour
