@@ -91,7 +91,7 @@ The application processes the NYC Taxi & Limousine Commission dataset, including
                   │             (Folder: raw_data/)          │
                   │  - yellow_tripdata_2019-01.csv           │
                   │  - taxi_zone_lookup.csv                  │
-                  │  - taxi_zones.shp                        │
+                  │  - taxi_zones.shp,* (shp, dbf, prj, etc.)│
                   └────────────────────┬─────────────────────┘
                                        │
                                        │ User places in /raw_data/
@@ -100,9 +100,9 @@ The application processes the NYC Taxi & Limousine Commission dataset, including
 │                                                                               │
 │   ┌─────────────────────────────┐                  ┌──────────────────────┐   │
 │   │       Data Processing       │                  │                      │   │
-│   │      (process_data.py)      ├─────────────────►│       GeoJSON        │   │
-│   │  - Pandas cleaning          │    Generates     │ taxi_zones_final.json│   │
-│   │  - Feature engineering      │                  │    (in /processed/)  │   │
+│   │      (process_data.py)      ├─────────────────►│    (rejected_data/)  │   │
+│   │  - Pandas cleaning          │    Rejected      │ - All the rejected   │   │
+│   │  - Feature engineering      │                  │   data are sent here │   │
 │   │  - Outlier rejection        │                  └──────────────────────┘   │
 │   └──────────────┬──────────────┘                                             │
 │                  │                                                            │
@@ -112,7 +112,8 @@ The application processes the NYC Taxi & Limousine Commission dataset, including
 │   ┌─────────────────────────────┐                                             │
 │   │       SQLite Database       │                                             │
 │   │  (processed/                │                                             │
-│   │      urban_mobility.db)     │                                             │
+│   │      urban_mobility.db)     |                                             |
+|   │      taxi_zones_final.json  |                                             │  
 │   └──────────────┬──────────────┘                                             │
 │                  │                                                            │
 │                  │ Queries                                                    │
