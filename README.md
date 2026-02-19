@@ -86,51 +86,59 @@ The application processes the NYC Taxi & Limousine Commission dataset, including
 ## System Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                         Frontend Layer                      │
-│  ┌─────────────┐  ┌──────────────────────────────────────┐  │
-│  │  index.html │  │  app.js (unified controller)         │  │
-│  │  styles.css │  │  - All API calls                     │  │
-│  │             │  │  - All visualizations (Chart.js)     │  │
-│  │             │  │  - All user interactions             │  │
-│  └─────────────┘  └──────────────────────────────────────┘  │
-└───────────────────────────┬─────────────────────────────────┘
-                            │ HTTP/REST
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│                      Backend API Layer                      │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │              Flask REST API (app.py)                 │   │
-│  │  - /api/summary              - /api/borough-analysis │   │
-│  │  - /api/trips                - /api/top-routes       │   │
-│  │  - /api/hourly-patterns      - /api/payment-analysis │   │
-│  │  - /api/weekend-comparison   - /api/health           │   │
-│  └──────────────────────────────────────────────────────┘   │
-│                    (database_handler.py)                    │
-└───────────────────────────┬─────────────────────────────────┘
-                            │ SQL Queries
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│                      Database Layer                         │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │              SQLite Database                         │   │
-│  │  Tables: trips (fact), zones (dimension)             │   │
-│  │  File: backend/processed/urban_mobility.db           │   │
-│  └──────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
-                            ▲
-                            │ ETL Pipeline
-                            │
-┌─────────────────────────────────────────────────────────────┐
-│                   Data Processing Layer                     │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │         main.py (Data Pipeline)                      │   │
-│  │  - Data Loading     - Outlier Detection (Custom)     │   │
-│  │  - Data Cleaning    - Feature Engineering            │   │
-│  │  - Validation       - Database Creation              │   │
-│  └──────────────────────────────────────────────────────┘   │
-│             (custom_algorithms.py)                          │
-└─────────────────────────────────────────────────────────────┘
+                  ┌──────────────────────────────────────────┐
+                  │              Raw NYC Taxi Data           │
+                  │             (Folder: raw_data/)          │
+                  │  - yellow_tripdata_2019-01.csv           │
+                  │  - taxi_zone_lookup.csv                  │
+                  │  - taxi_zones.shp                        │
+                  └────────────────────┬─────────────────────┘
+                                       │
+                                       │ User places in /raw_data/
+                                       ▼
+┌───────────────────────────────────────────────────────────────────────────────┐
+│                                                                               │
+│   ┌─────────────────────────────┐                  ┌──────────────────────┐   │
+│   │       Data Processing       │                  │                      │   │
+│   │      (process_data.py)      ├─────────────────►│       GeoJSON        │   │
+│   │  - Pandas cleaning          │    Generates     │ taxi_zones_final.json│   │
+│   │  - Feature engineering      │                  │    (in /processed/)  │   │
+│   │  - Outlier rejection        │                  └──────────────────────┘   │
+│   └──────────────┬──────────────┘                                             │
+│                  │                                                            │
+│                  │ Stores cleaned data +                                      │
+│                  │ derived features                                           │
+│                  ▼                                                            │
+│   ┌─────────────────────────────┐                                             │
+│   │       SQLite Database       │                                             │
+│   │  (processed/                │                                             │
+│   │      urban_mobility.db)     │                                             │
+│   └──────────────┬──────────────┘                                             │
+│                  │                                                            │
+│                  │ Queries                                                    │
+│                  ▼                                                            │
+│   ┌─────────────────────────────┐                                             │
+│   │      Flask Backend API      │                                             │
+│   │          (app.py)           │                                             │
+│   │  - database_handler.py      │                                             │
+│   │  - custom_algorithms.py     │                                             │
+│   │  Endpoints: /api/trips,     │                                             │
+│   │  /api/hourly-patterns...    │                                             │
+│   └──────────────┬──────────────┘                                             │
+│                  │          ▲                                                 │
+└──────────────────┼──────────┼─────────────────────────────────────────────────┘
+ JSON API responses│          │ User interaction
+                   │          │ Filters, zoom, etc.
+                   ▼          │
+         ┌──────────────────────────────┐
+         │           Frontend           │
+         │                              │
+         │      Frontend Dashboard      │
+         │  - templates/index.html      │
+         │  - static/app.js (fetch API) │
+         │  - static/styles.css         │
+         │  - Charts + Interactive Map  │
+         └──────────────────────────────┘
 ```
 
 ---
