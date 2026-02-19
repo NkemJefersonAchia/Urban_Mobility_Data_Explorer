@@ -91,7 +91,7 @@ python -m pip install flask flask-cors pandas geopandas shapely
 Confirm all packages are installed:
 
 ```bash
-python3 -c "import flask, flask_cors, pandas, geopandas; print('✓ All dependencies installed successfully!')"
+python3 -c "import flask, flask_cors, pandas, geopandas; print('All dependencies installed successfully!')"
 ```
 
 ### Troubleshooting Virtual Environment
@@ -129,7 +129,7 @@ venv\Scripts\Activate.ps1
 Now that your environment is set up, follow these steps to run the app.
 
 ### Prerequisites for Running
-- ✓ Virtual environment created and activated (see above)
+- Virtual environment created and activated (see above)
 - Data files in `data/` folder:
   - `yellow_tripdata_2019-01.csv`
   - `taxi_zone_lookup.csv`
@@ -192,13 +192,13 @@ Login: admin/admin123 or user/user123
  * Debug mode: on
 ```
 
-✅ **Backend is running at:** `http://127.0.0.1:5000`
+**Backend is running at:** `http://127.0.0.1:5000`
 
 **Login credentials:**
 - Username: `admin` / Password: `admin123`
 - Username: `user` / Password: `user123`
 
-**Keep this terminal open** — it's serving your API requests.
+**Keep this terminal open** -- it's serving your API requests.
 
 ### Step 3: Launch the Frontend
 
@@ -226,7 +226,7 @@ python -m http.server 5500
 Serving HTTP on 127.0.0.1 port 5500 (http://127.0.0.1:5500/)
 ```
 
-✅ **Frontend is running at:** `http://127.0.0.1:5500/index.html`
+**Frontend is running at:** `http://127.0.0.1:5500/index.html`
 
 ### Step 4: Access the Dashboard
 
@@ -242,7 +242,7 @@ http://127.0.0.1:5500/index.html
 - Filters work and charts display data
 - All tabs (Hourly Patterns, Borough Analysis, Routes, etc.) are functional
 
-**Keep this terminal open** — it's serving the frontend files.
+**Keep this terminal open** -- it's serving the frontend files.
 
 ---
 
@@ -394,9 +394,9 @@ The application processes the NYC Taxi & Limousine Commission dataset, including
 - Outliers detected using custom IQR algorithm
 
 **Engineered features:**
-- `duration_mins` = dropoff time − pickup time
+- `duration_mins` = dropoff time - pickup time
 - `avg_speed_mph` = trip distance / (duration in hours)
-- `tip_percentage` = tip / fare × 100
+- `tip_percentage` = tip / fare x 100
 - `pickup_hour` = hour of pickup timestamp
 - `fare_range` = categorical binning (0-5, 5-10, 10-20, 20-50, 50+)
 - `distance_category` = categorical binning (0-1, 1-3, 3-5, 5-10, 10+ miles)
@@ -411,7 +411,7 @@ Located in `backend/custom_algorithms.py`
 
 ### 1) CustomSort (QuickSort)
 - **Purpose:** Sort routes, trips, or any dataset by specified metric  
-- **Time Complexity:** O(n log n) average, O(n²) worst case  
+- **Time Complexity:** O(n log n) average, O(n2) worst case  
 - **Space Complexity:** O(log n) for recursion stack
 
 ### 2) OutlierDetector (IQR Method)
@@ -443,24 +443,24 @@ All custom algorithms are implemented in `backend/custom_algorithms.py` without 
 ```
 FUNCTION QuickSort(array, low, high, key):
     IF low < high:
-        pivot_index ← PARTITION(array, low, high, key)
+        pivot_index <- PARTITION(array, low, high, key)
         QuickSort(array, low, pivot_index - 1, key)
         QuickSort(array, pivot_index + 1, high, key)
 
 FUNCTION PARTITION(array, low, high, key):
-    pivot ← array[high][key]
-    i ← low - 1
+    pivot <- array[high][key]
+    i <- low - 1
     
     FOR j FROM low TO high - 1:
         IF array[j][key] >= pivot:  // Descending order
-            i ← i + 1
+            i <- i + 1
             SWAP(array[i], array[j])
     
     SWAP(array[i + 1], array[high])
     RETURN i + 1
 ```
 
-**Time Complexity:** O(n log n) average, O(n²) worst case  
+**Time Complexity:** O(n log n) average, O(n2) worst case  
 **Space Complexity:** O(log n) recursion stack  
 **Use Case:** Sorting routes by trip count, sorting trips by fare/distance
 
@@ -471,15 +471,15 @@ FUNCTION PARTITION(array, low, high, key):
 **Pseudo-code:**
 ```
 FUNCTION DetectOutliers(values, key):
-    sorted_values ← BUBBLE_SORT(values)
-    Q1 ← CALCULATE_QUARTILE(sorted_values, 0.25)
-    Q3 ← CALCULATE_QUARTILE(sorted_values, 0.75)
-    IQR ← Q3 - Q1
+    sorted_values <- BUBBLE_SORT(values)
+    Q1 <- CALCULATE_QUARTILE(sorted_values, 0.25)
+    Q3 <- CALCULATE_QUARTILE(sorted_values, 0.75)
+    IQR <- Q3 - Q1
     
-    lower_bound ← Q1 - 1.5 * IQR
-    upper_bound ← Q3 + 1.5 * IQR
+    lower_bound <- Q1 - 1.5 * IQR
+    upper_bound <- Q3 + 1.5 * IQR
     
-    outliers ← []
+    outliers <- []
     FOR each record IN values:
         IF record[key] < lower_bound OR record[key] > upper_bound:
             outliers.APPEND(record)
@@ -487,8 +487,8 @@ FUNCTION DetectOutliers(values, key):
     RETURN outliers
 
 FUNCTION BUBBLE_SORT(array):
-    sorted_array ← COPY(array)
-    n ← LENGTH(sorted_array)
+    sorted_array <- COPY(array)
+    n <- LENGTH(sorted_array)
     
     FOR i FROM 0 TO n:
         FOR j FROM 0 TO n - i - 1:
@@ -498,7 +498,7 @@ FUNCTION BUBBLE_SORT(array):
     RETURN sorted_array
 ```
 
-**Time Complexity:** O(n²) for bubble sort, O(n) for outlier detection  
+**Time Complexity:** O(n2) for bubble sort, O(n) for outlier detection  
 **Space Complexity:** O(n) for sorted copy  
 **Use Case:** Detecting anomalous fares and distances in trip data
 
@@ -509,19 +509,19 @@ FUNCTION BUBBLE_SORT(array):
 **Pseudo-code:**
 ```
 FUNCTION AggregateByHour(trips):
-    hourly_buckets ← NEW DICTIONARY
+    hourly_buckets <- NEW DICTIONARY
     
     FOR each trip IN trips:
-        hour ← EXTRACT_HOUR(trip.pickup_time)
+        hour <- EXTRACT_HOUR(trip.pickup_time)
         
         IF hour NOT IN hourly_buckets:
-            hourly_buckets[hour] ← NEW LIST
+            hourly_buckets[hour] <- NEW LIST
         
         hourly_buckets[hour].APPEND(trip)
     
-    aggregated_results ← []
+    aggregated_results <- []
     FOR each hour, trip_list IN hourly_buckets:
-        stats ← CALCULATE_STATS(trip_list)
+        stats <- CALCULATE_STATS(trip_list)
         aggregated_results.APPEND({
             'hour': hour,
             'trip_count': LENGTH(trip_list),
@@ -532,12 +532,12 @@ FUNCTION AggregateByHour(trips):
     RETURN aggregated_results
 
 FUNCTION CALCULATE_STATS(trip_list):
-    total_fare ← 0
-    total_distance ← 0
+    total_fare <- 0
+    total_distance <- 0
     
     FOR each trip IN trip_list:
-        total_fare ← total_fare + trip.fare
-        total_distance ← total_distance + trip.distance
+        total_fare <- total_fare + trip.fare
+        total_distance <- total_distance + trip.distance
     
     RETURN {
         'avg_fare': total_fare / LENGTH(trip_list),
@@ -556,14 +556,14 @@ FUNCTION CALCULATE_STATS(trip_list):
 **Pseudo-code:**
 ```
 FUNCTION DetectCongestionHours(hourly_data):
-    all_speeds ← []
+    all_speeds <- []
     
     FOR each hour_record IN hourly_data:
         all_speeds.APPEND(hour_record.avg_speed)
     
-    avg_system_speed ← CALCULATE_AVERAGE(all_speeds)
+    avg_system_speed <- CALCULATE_AVERAGE(all_speeds)
     
-    congested_hours ← []
+    congested_hours <- []
     FOR each hour_record IN hourly_data:
         IF hour_record.avg_speed < avg_system_speed * 0.8:  // 80% of average
             congested_hours.APPEND({
@@ -701,7 +701,7 @@ Trip patterns by hour of day
 Statistics grouped by NYC borough
 
 ### `GET /api/top-routes?limit=20`
-Most popular pickup→dropoff routes
+Most popular pickup to dropoff routes
 
 ### `GET /api/payment-analysis`
 Payment type distribution and tipping
@@ -767,10 +767,10 @@ print(f"Bounds: [{outliers['lower_bound']}, {outliers['upper_bound']}]")
 2. Join with zone lookup (pickup and dropoff)
 3. Normalize timestamps to datetime
 4. Filter out invalid records:
-   - Distance ≤ 0 or > 200 miles
-   - Fare ≤ 0 or > $500
-   - Passenger count ≤ 0 or > 8
-   - Duration ≤ 0 or > 24 hours
+   - Distance <= 0 or > 200 miles
+   - Fare <= 0 or > $500
+   - Passenger count <= 0 or > 8
+   - Duration <= 0 or > 24 hours
 5. Detect outliers using custom IQR algorithm
 6. Calculate derived features
 7. Create SQLite database
@@ -798,7 +798,7 @@ print(f"Bounds: [{outliers['lower_bound']}, {outliers['upper_bound']}]")
 3. **Tabs (Visualizations)**
    - **Hourly Patterns:** Trips and fares by hour
    - **Borough Analysis:** Stats by NYC borough
-   - **Popular Routes:** Most traveled origin→destination pairs
+   - **Popular Routes:** Most traveled origin to destination pairs
    - **Weekend Comparison:** Side-by-side metrics
    - **Payment Analysis:** Payment type breakdown + tipping
    - **Trips Table:** Filtered list with pagination
