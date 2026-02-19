@@ -197,6 +197,154 @@ Located in `backend/custom_algorithms.py`
 
 ---
 
+## Algorithm Pseudo-code Documentation
+
+All custom algorithms are implemented in `backend/custom_algorithms.py` without relying on built-in sort/stats functions.
+
+### 1) CustomSort - QuickSort Implementation
+
+**Pseudo-code:**
+```
+FUNCTION QuickSort(array, low, high, key):
+    IF low < high:
+        pivot_index ← PARTITION(array, low, high, key)
+        QuickSort(array, low, pivot_index - 1, key)
+        QuickSort(array, pivot_index + 1, high, key)
+
+FUNCTION PARTITION(array, low, high, key):
+    pivot ← array[high][key]
+    i ← low - 1
+    
+    FOR j FROM low TO high - 1:
+        IF array[j][key] >= pivot:  // Descending order
+            i ← i + 1
+            SWAP(array[i], array[j])
+    
+    SWAP(array[i + 1], array[high])
+    RETURN i + 1
+```
+
+**Time Complexity:** O(n log n) average, O(n²) worst case  
+**Space Complexity:** O(log n) recursion stack  
+**Use Case:** Sorting routes by trip count, sorting trips by fare/distance
+
+---
+
+### 2) OutlierDetector - IQR Method with Manual Sorting
+
+**Pseudo-code:**
+```
+FUNCTION DetectOutliers(values, key):
+    sorted_values ← BUBBLE_SORT(values)
+    Q1 ← CALCULATE_QUARTILE(sorted_values, 0.25)
+    Q3 ← CALCULATE_QUARTILE(sorted_values, 0.75)
+    IQR ← Q3 - Q1
+    
+    lower_bound ← Q1 - 1.5 * IQR
+    upper_bound ← Q3 + 1.5 * IQR
+    
+    outliers ← []
+    FOR each record IN values:
+        IF record[key] < lower_bound OR record[key] > upper_bound:
+            outliers.APPEND(record)
+    
+    RETURN outliers
+
+FUNCTION BUBBLE_SORT(array):
+    sorted_array ← COPY(array)
+    n ← LENGTH(sorted_array)
+    
+    FOR i FROM 0 TO n:
+        FOR j FROM 0 TO n - i - 1:
+            IF sorted_array[j] > sorted_array[j + 1]:
+                SWAP(sorted_array[j], sorted_array[j + 1])
+    
+    RETURN sorted_array
+```
+
+**Time Complexity:** O(n²) for bubble sort, O(n) for outlier detection  
+**Space Complexity:** O(n) for sorted copy  
+**Use Case:** Detecting anomalous fares and distances in trip data
+
+---
+
+### 3) TripAggregator - Manual Grouping (No groupby())
+
+**Pseudo-code:**
+```
+FUNCTION AggregateByHour(trips):
+    hourly_buckets ← NEW DICTIONARY
+    
+    FOR each trip IN trips:
+        hour ← EXTRACT_HOUR(trip.pickup_time)
+        
+        IF hour NOT IN hourly_buckets:
+            hourly_buckets[hour] ← NEW LIST
+        
+        hourly_buckets[hour].APPEND(trip)
+    
+    aggregated_results ← []
+    FOR each hour, trip_list IN hourly_buckets:
+        stats ← CALCULATE_STATS(trip_list)
+        aggregated_results.APPEND({
+            'hour': hour,
+            'trip_count': LENGTH(trip_list),
+            'avg_fare': stats.avg_fare,
+            'avg_distance': stats.avg_distance
+        })
+    
+    RETURN aggregated_results
+
+FUNCTION CALCULATE_STATS(trip_list):
+    total_fare ← 0
+    total_distance ← 0
+    
+    FOR each trip IN trip_list:
+        total_fare ← total_fare + trip.fare
+        total_distance ← total_distance + trip.distance
+    
+    RETURN {
+        'avg_fare': total_fare / LENGTH(trip_list),
+        'avg_distance': total_distance / LENGTH(trip_list)
+    }
+```
+
+**Time Complexity:** O(n) for single pass aggregation  
+**Space Complexity:** O(k) where k = number of unique hours  
+**Use Case:** Aggregating trip statistics by hour without pandas groupby()
+
+---
+
+### 4) SpeedAnalyzer - Congestion Detection
+
+**Pseudo-code:**
+```
+FUNCTION DetectCongestionHours(hourly_data):
+    all_speeds ← []
+    
+    FOR each hour_record IN hourly_data:
+        all_speeds.APPEND(hour_record.avg_speed)
+    
+    avg_system_speed ← CALCULATE_AVERAGE(all_speeds)
+    
+    congested_hours ← []
+    FOR each hour_record IN hourly_data:
+        IF hour_record.avg_speed < avg_system_speed * 0.8:  // 80% of average
+            congested_hours.APPEND({
+                'hour': hour_record.hour,
+                'speed': hour_record.avg_speed,
+                'congestion_level': 'HIGH'
+            })
+    
+    RETURN congested_hours
+```
+
+**Time Complexity:** O(n)  
+**Space Complexity:** O(1) - fixed buckets for 24 hours  
+**Use Case:** Identifying peak congestion hours for urban planning insights
+
+---
+
 ## Known Errors Faced (and Fixes)
 
 ### 1) **Frontend not displaying data**
@@ -228,26 +376,61 @@ NOT `localhost` or port 5500.
 ## Step-by-Step: Run the Application
 
 ### Prerequisites
-- Python 3 installed
+- Python 3.10+ installed
 - Data files in `data/` folder:
   - `yellow_tripdata_2019-01.csv`
   - `taxi_zone_lookup.csv`
-  - `taxi_zones.shp` (and related shapefile files)
+  - `taxi_zones.shp` (and related shapefile files: .shx, .dbf, .prj)
+
+### Check Dependencies First
+
+Before running the application, verify all required packages are installed:
+
+```bash
+chmod +x quick_start.sh
+./quick_start.sh
+```
+
+This checks for:
+- Python 3
+- flask
+- flask-cors
+- pandas
+- geopandas
+- shapely
+
+If any dependencies are missing, install them:
+
+```bash
+pip install flask flask-cors pandas geopandas shapely
+```
+
+---
 
 ### Step 1: Build the Database
 
-Run the data processing pipeline (this is required once):
+The database schema is **automatically generated** by running the data processing pipeline located in `backend/main.py`:
 
 ```bash
 cd backend
 python3 main.py
 ```
 
+**What this does:**
+- Loads raw CSV data from `data/` folder
+- Cleans, validates, and engineers features
+- **Creates SQLite database schema** at: `backend/processed/urban_mobility.db`
+- Saves rejected/invalid records to: `backend/rejected_data/invalid_dates.csv`
+- Exports GeoJSON to: `backend/processed/taxi_zones_final.json`
+
 **Output:**
 ```
 Starting Urban Mobility Data Pipeline...
 Cleaning data...
-   - Cleaned X records.
+   - Validating dates: Accepting years <= 2019, rejecting 2020+...
+   - Found X records from year 2020 onwards
+   - Invalid records saved to: backend/rejected_data/invalid_dates.csv
+   - Cleaned Y records total.
 Engineering features...
 Saving to Database: backend/processed/urban_mobility.db...
 Exporting GeoJSON...
@@ -255,16 +438,18 @@ Exporting GeoJSON...
 TASK 1 & 2 COMPLETE!
 ```
 
-This creates:
-- `backend/processed/urban_mobility.db` (SQLite database)
-- `backend/processed/taxi_zones_final.json` (GeoJSON for spatial use)
+**Database Schema Location:**
+The complete database schema is stored in: `backend/processed/urban_mobility.db`
 
-**Verify the DB was created:**
+This creates two tables:
+- `trips` (Fact table): Contains cleaned trip records with engineered features
+- `zones` (Dimension table): Contains taxi zone lookup data
+
+To inspect the schema manually:
 ```bash
-sqlite3 backend/processed/urban_mobility.db "SELECT COUNT(*) FROM trips;"
+sqlite3 backend/processed/urban_mobility.db ".schema trips"
+sqlite3 backend/processed/urban_mobility.db ".schema zones"
 ```
-
-Should return a number > 0 (total trip records).
 
 ### Step 2: Start the Backend API
 
@@ -275,23 +460,44 @@ python3 app.py
 
 **Output:**
 ```
+======================================================================
+URBAN MOBILITY EXPLORER API (SQLite)
+======================================================================
+Database: urban_mobility.db
+API URL: http://127.0.0.1:5000
+Login: admin/admin123 or user/user123
+======================================================================
  * Running on http://127.0.0.1:5000
  * Debug mode: on
 ```
 
 API is now running at: `http://127.0.0.1:5000`
 
-### Step 3: Open the Frontend
+**Login credentials:**
+- Username: `admin` / Password: `admin123`
+- Username: `user` / Password: `user123`
 
-Option A: Open directly in browser
+Keep this terminal open.
+
+#### Step 3: Launch the Frontend
+
+Open a **new terminal**:
+
 ```bash
-open frontend/index.html
-# or
-firefox frontend/index.html
+cd frontend
+python3 -m http.server 5500
 ```
 
+**Output:**
+```
+Serving HTTP on 127.0.0.1 port 5500 (http://127.0.0.1:5500/)
+```
 
-**Expected result:** Dashboard loads, filters work, charts display data.
+Frontend opens at: `http://127.0.0.1:5500/index.html`
+
+**Expected result:** Dashboard loads, you can login, filters work, and charts display data.
+
+Keep this terminal open.
 
 ---
 
@@ -304,17 +510,23 @@ Urban_Mobility_Data_Explorer/
 │   ├── main.py                     # Data processing pipeline
 │   ├── database_handler.py         # SQLite query handler
 │   ├── custom_algorithms.py        # Custom Sort, OutlierDetector, etc.
-│   └── processed/
-│       ├── urban_mobility.db       # SQLite database (created by main.py)
-│       └── taxi_zones_final.json   # GeoJSON export (created by main.py)
+│   ├── processed/
+│   │   ├── urban_mobility.db       # SQLite database (created by main.py)
+│   │   └── taxi_zones_final.json   # GeoJSON export (created by main.py)
+│   └── rejected_data/
+│       ├── invalid_dates.csv       # Invalid/rejected records
+│       └── rejection_report.txt    # Rejection details
 ├── frontend/
 │   ├── index.html                  # Main dashboard HTML
 │   ├── styles.css                  # Modern design system CSS
 │   └── app.js                      # Unified controller (all logic)
+├── docs/
+│   └── TECHNICAL_REPORT.pdf        # Technical documentation (2-3 pages)
 ├── data/
 │   ├── yellow_tripdata_2019-01.csv # Trip records (download separately)
 │   ├── taxi_zone_lookup.csv        # Zone lookup (download separately)
 │   └── taxi_zones.*                # Shapefile components (download separately)
+├── quick_start.sh                  # Dependency checker script
 └── README.md                       # This file
 ```
 
